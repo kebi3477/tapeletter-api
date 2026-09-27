@@ -267,6 +267,20 @@ docker compose --env-file .env.production logs --tail 50 pg-backup offsite-backu
 
 ---
 
+### 외장하드 백업 (미니PC)
+
+미니PC에 USB 외장하드(2TB, FAT32, 라벨 `2TB`)를 `/mnt/backup`에 붙여 두고, `external-backup` 서비스가 매일 한국 05:00에 복제한다. FAT32 그대로 써서 맥에 꽂아도 열린다(파일 하나 4GB 제한은 녹음·DB 덤프 크기로는 문제없다).
+
+- 마운트 (`/etc/fstab`, 빠져 있어도 부팅이 멈추지 않게 `nofail`):
+  `LABEL=2TB /mnt/backup vfat uid=1000,gid=1000,umask=022,nofail,x-systemd.device-timeout=10 0 0`
+- `.env.production`: `EXTERNAL_BACKUP_DIR=/mnt/backup`
+- 외장하드 안의 `tapeletter-backup/.target` 표식이 있을 때만 돈다. 하드가 빠지면 `/mnt/backup`은 내장 저장소의 빈 폴더라서, 거기에 쌓지 않으려는 장치다
+- 구조: `tapeletter-backup/files/`(녹음 파일 버킷 그대로), `files-deleted/<날짜>/`(지워진 파일 90일), `postgres/`(DB 덤프 90일), `LAST_SUCCESS`(마지막 성공 시각)
+- 바로 한 번 돌리기: `docker compose --env-file .env.production run --rm --entrypoint /bin/sh external-backup /ops/backup/external.sh`
+- 복원: DB는 `tapeletter-backup/postgres/`의 덤프를 7-1과 같은 방법으로, 녹음 파일은
+  `docker compose --env-file .env.production run --rm --entrypoint rclone external-backup copy /external/tapeletter-backup/files store:cassette --transfers 8`
+- 기존 파일(`prev/` 등)은 건드리지 않는다
+
 ## 7. 복원
 
 ### 7-1. DB만 되돌리기 (같은 미니PC)

@@ -186,6 +186,37 @@ services:
       timeout: 3s
       retries: 3
 
+  # 매일 외장하드로 복제: 녹음 파일 버킷 + DB 백업 파일 (EXTERNAL_BACKUP_DIR, 미니PC는 /mnt/backup)
+  # 외장하드 안에 tapeletter-backup/.target 표식이 있을 때만 돈다 (빠져 있으면 내장 저장소에 쌓지 않게)
+  external-backup:
+    image: rclone/rclone:latest
+    restart: unless-stopped
+    logging: *logging
+    entrypoint: ["/bin/sh", "/ops/backup/cron.sh"]
+    environment:
+      CRON_SCHEDULE: ${EXTERNAL_BACKUP_CRON:-0 20 * * *} # UTC 20:00 = 한국 05:00 (pg 백업 뒤)
+      JOB: /bin/sh /ops/backup/external.sh
+      S3_BUCKET: ${S3_BUCKET:-cassette}
+      EXTERNAL_POSTGRES_RETENTION: ${EXTERNAL_POSTGRES_RETENTION:-90d}
+      EXTERNAL_DELETED_RETENTION: ${EXTERNAL_DELETED_RETENTION:-90d}
+      RCLONE_CONFIG_STORE_TYPE: s3
+      RCLONE_CONFIG_STORE_PROVIDER: SeaweedFS
+      RCLONE_CONFIG_STORE_ENDPOINT: http://s3:9000
+      RCLONE_CONFIG_STORE_ACCESS_KEY_ID: ${S3_ROOT_USER:-cassette}
+      RCLONE_CONFIG_STORE_SECRET_ACCESS_KEY: ${S3_ROOT_PASSWORD}
+    volumes:
+      - ./ops/backup:/ops/backup:ro
+      - ${BACKUP_DIR:-./backups}:/backups:ro
+      - ${EXTERNAL_BACKUP_DIR:-./backups-external}:/external
+    depends_on:
+      s3:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pgrep", "crond"]
+      interval: 60s
+      timeout: 3s
+      retries: 3
+
 volumes:
   postgres-data:
   redis-data:
