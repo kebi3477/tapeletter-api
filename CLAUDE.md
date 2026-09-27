@@ -10,7 +10,7 @@ tapeletter(테이프레터) API. 목소리 테이프를 녹음해 친구에게 �
 
 - NestJS 12, ESM(`"type": "module"`), 테스트는 vitest, 린트는 oxlint
 - Postgres(TypeORM, **마이그레이션으로 관리**, `synchronize` 사용 금지), Redis + BullMQ, S3 호환 저장소(운영: SeaweedFS)
-- 미니PC에서 docker compose로 운영하고, myhandball Caddy 뒤의 edge 입구(`docker-compose.edge.yml`, `cassette-edge`)로 `https://tapeletter.lab241.com`에 공개한다(전환 기간에는 옛 도메인 `cassette.lab241.com`도 같이 연다)(Cloudflare Tunnel 방식도 파일은 남아 있다. `docs/deploy.md` 0장)
+- 미니PC에서 docker compose로 운영하고, myhandball Caddy 뒤의 edge 입구(`docker-compose.edge.yml`, `cassette-edge`)로 `https://tapeletter.lab241.com`에 공개한다(옛 도메인 `cassette.lab241.com`은 2026-09-27에 닫았다)(Cloudflare Tunnel 방식도 파일은 남아 있다. `docs/deploy.md` 0장)
 - 두 저장소에 공통으로 적용되는 아키텍처 결정(스키마, 흐름, 미결정 사항)은 `../ARCHITECTURE.md`에 있다 (저장소 바깥 파일)
 - 클라이언트는 Flutter 앱 하나다. 응답 스펙은 앱 도메인 모델과 맞춘다
 - **API 계약서는 `docs/api.md` 하나다.** 엔드포인트·응답·오류 코드를 바꾸면 같은 커밋에서 고치고 변경 이력에 적는다. 오류 코드는 `src/common/errors/error-codes.ts`와 표를 같게 유지한다
