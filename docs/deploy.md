@@ -6,7 +6,7 @@
 
 | 방식 | 파일 | 언제 |
 |---|---|---|
-| **edge** (지금 미니PC) | `docker-compose.edge.yml` | 이미 443을 쓰는 리버스 프록시가 있을 때. 미니PC에서는 myhandball Caddy가 `tapeletter.lab241.com`(과 전환 기간의 `cassette.lab241.com`)을 `cassette-edge:80`으로 넘긴다 (0장) |
+| **edge** (지금 미니PC) | `docker-compose.edge.yml` | 이미 443을 쓰는 리버스 프록시가 있을 때. 미니PC에서는 myhandball Caddy가 `tapeletter.lab241.com`을 `cassette-edge:80`으로 넘긴다 (0장) |
 | tunnel | `docker-compose.tunnel.yml` | 도메인이 Cloudflare에 있고 포트를 열 수 없을 때 (2장) |
 
 ## 0. 지금 미니PC 구성 (edge, tapeletter.lab241.com)
@@ -18,9 +18,9 @@
 ```
 
 - 도메인 하나로 전부 받는다: `PUBLIC_BASE_URL=https://tapeletter.lab241.com`, `S3_PUBLIC_ENDPOINT=https://tapeletter.lab241.com`(버킷 경로 `/cassette/*`로 저장소(SeaweedFS)에 간다. 버킷 이름은 내부 이름이라 `cassette` 그대로).
-- **옛 도메인 `cassette.lab241.com`은 전환 기간 동안 같이 열어 둔다.** myhandball Caddyfile에 두 도메인 모두 `reverse_proxy cassette-edge:80`으로 두면 된다. edge는 경로로만 나누므로 도메인과 상관없이 동작하고, 이미 공유된 옛 링크(`https://cassette.lab241.com/t/…`)와 옛 앱의 API 주소도 계속 열린다. 새 링크·재생 URL은 `PUBLIC_BASE_URL`·`S3_PUBLIC_ENDPOINT`(새 도메인)로 만들어진다. 옛 앱이 모두 업데이트되고 옛 링크가 만료(7일)된 뒤 닫는다.
+- 옛 도메인 `cassette.lab241.com`은 이름 변경 전환 기간에만 같이 열었고, 2026-09-27에 닫았다(가비아 레코드 삭제, myhandball Caddy 블록 제거, `APPLE_CLIENT_IDS`에서 `com.kebi.cassette` 제거).
 - DNS: 가비아 `lab241.com`에 `tapeletter`(전환 기간에는 `cassette`도) A 레코드 → 미니PC 공인 IP. 인증서는 myhandball Caddy가 발급·갱신한다.
-- myhandball `deploy/Caddyfile`에 `tapeletter.lab241.com, cassette.lab241.com { reverse_proxy cassette-edge:80 }` 블록이 있고, `cassette-edge` 컨테이너만 `myhandball_default` 네트워크에 들어간다. api·s3를 그 네트워크에 넣지 않는 이유는 서비스 이름(`api`, `postgres`)이 myhandball과 겹쳐 엉뚱한 컨테이너로 가기 때문이다.
+- myhandball `deploy/Caddyfile`에 `tapeletter.lab241.com { reverse_proxy cassette-edge:80 }` 블록이 있고, `cassette-edge` 컨테이너만 `myhandball_default` 네트워크에 들어간다. api·s3를 그 네트워크에 넣지 않는 이유는 서비스 이름(`api`, `postgres`)이 myhandball과 겹쳐 엉뚱한 컨테이너로 가기 때문이다.
 - 실제 사용자 IP: 바깥 Caddy가 `X-Forwarded-For`를 만들고, `cassette-edge`는 그 값을 바꾸지 않고 넘긴다(API는 `trust proxy 1`).
 - 공유기는 집 안에서 공인 IP로 되돌아오는 접속을 지원하지 않아서, 같은 공유기 안의 기기는 `tapeletter.lab241.com`에 닿지 않는다. 집 안 테스트는 LTE로 하거나 맥의 로컬 서버를 쓴다.
 

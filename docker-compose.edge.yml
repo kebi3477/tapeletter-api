@@ -1,5 +1,5 @@
 # 이미 443을 쓰는 리버스 프록시(Caddy·nginx 등) 뒤에 붙일 때 쓰는 입구.
-# 미니PC에서는 myhandball Caddy가 tapeletter.lab241.com(과 전환 기간의 cassette.lab241.com)을 이 컨테이너(cassette-edge:80)로 넘긴다.
+# 미니PC에서는 myhandball Caddy가 tapeletter.lab241.com을 이 컨테이너(cassette-edge:80)로 넘긴다.
 #
 # 사용: docker compose -f docker-compose.yml -f docker-compose.edge.yml --env-file .env.production up -d --build
 # EDGE_NETWORK: 앞단 프록시 컨테이너가 있는 도커 네트워크 (미니PC: myhandball_default)
