@@ -22,6 +22,7 @@ rclone sync "store:${S3_BUCKET}" "$DEST/files" --backup-dir "$DEST/files-deleted
 echo "[external] Postgres 백업 → $DEST/postgres"
 rclone copy /backups/postgres "$DEST/postgres" $FLAGS
 
+mkdir -p "$DEST/postgres" "$DEST/files-deleted"
 echo "[external] 보관 기간 지난 파일 정리 (postgres ${KEEP_PG}, files-deleted ${KEEP_DELETED})"
 rclone delete "$DEST/postgres" --min-age "$KEEP_PG" || true
 rclone delete "$DEST/files-deleted" --min-age "$KEEP_DELETED" --rmdirs || true
