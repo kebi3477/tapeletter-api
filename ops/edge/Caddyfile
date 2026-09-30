@@ -29,6 +29,21 @@
 " 200
 	}
 
+	# 소개 사이트 (정적, ops/edge/site → /srv/site). 정확히 이 경로만 여기서 끝나고 나머지는 전부 api로 간다
+	@site path / /favicon.png /apple-touch-icon.png /site/*
+	handle @site {
+		root * /srv/site
+		header {
+			X-Content-Type-Options nosniff
+			Referrer-Policy strict-origin-when-cross-origin
+			Content-Security-Policy "default-src 'none'; style-src 'self' https://cdn.jsdelivr.net; font-src https://cdn.jsdelivr.net; img-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+		}
+		# 파일 이름에 해시가 없어 하루만 캐시한다. index는 매번 확인
+		header /site/* Cache-Control "public, max-age=86400"
+		header / Cache-Control "no-cache"
+		file_server
+	}
+
 	# 나머지: API(/api/*), 링크 페이지(/t/*), /.well-known/*, /static/*, 정책 페이지(/privacy, /terms, /child-safety)
 	handle {
 		reverse_proxy cassette-api:3000 {

@@ -1,0 +1,195 @@
+/* tapeletter 소개 사이트. 디자인 원본: design_handoff_website/Tapeletter Website.dc.html (인라인 스타일이 스펙) */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:#fff;font-family:'SUIT',system-ui,sans-serif;color:#111;-webkit-font-smoothing:antialiased}
+a{color:#111;text-decoration:none}
+a[href]:hover{color:#E5402B}
+img{border:0}
+.page{display:flex;flex-direction:column}
+.wrap{max-width:1120px;margin:0 auto}
+.logo-mark{display:block;flex:none}
+
+/* 스토어 배지: 출시 전이라 href가 없다 (index.html 맨 위 주석) */
+.badges{display:flex;align-items:center}
+.badge{display:flex}
+.badge:not([href]){cursor:default}
+.badge img{display:block;height:54px;width:auto}
+
+/* 1. Header */
+.header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 1px 0 #EDEDEA}
+.header .wrap{padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:8px}
+.brand span{font:800 20px/1 'SUIT';letter-spacing:-.045em}
+.header .badges{gap:8px}
+.header .badge img{height:36px}
+
+/* 2. Hero */
+.hero{background:#F6F6F4}
+.hero .wrap{padding:88px 24px 0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:56px}
+.hero-copy{flex:1 1 420px;display:flex;flex-direction:column;gap:24px;padding-bottom:88px}
+.eyebrow{font:700 15px 'SUIT';color:#E5402B}
+.hero h1{margin:0;font:800 clamp(40px,6vw,64px)/1.2 'SUIT';letter-spacing:-.055em;text-wrap:pretty}
+.hero p{margin:0;font:500 18px/1.7 'SUIT';color:#6E6E6B;max-width:440px;text-wrap:pretty}
+.hero .badges{flex-wrap:wrap;gap:12px;margin-top:8px}
+.hero-note{font:600 14px 'SUIT';color:#8A8A87}
+.hero-art{flex:1 1 360px;min-width:0;display:flex;justify-content:center;align-items:center;padding-bottom:88px}
+.phones{position:relative;width:100%;max-width:440px;display:flex;justify-content:center;align-items:center}
+.circle{position:absolute;width:400px;height:400px;max-width:100%;border-radius:50%;background:#EAE7E1}
+.phone-back{position:absolute;width:210px;padding:8px;background:#111;border-radius:38px;box-shadow:0 30px 60px -30px rgba(0,0,0,.35)}
+.phone-back img{display:block;width:100%;height:auto;border-radius:30px}
+.phone-back.l{left:0;top:60px;transform:rotate(-6deg)}
+.phone-back.r{right:0;top:100px;transform:rotate(6deg)}
+.phone-front{position:relative;width:280px;padding:10px;background:#111;border-radius:50px;box-shadow:0 50px 90px -30px rgba(0,0,0,.45)}
+.phone-front img{display:block;width:100%;height:auto;border-radius:40px}
+.phone-back,.phone-front{box-sizing:content-box}
+
+/* 3. 섹션 인트로 · 5. 이유 */
+.intro{max-width:1120px;margin:0 auto;padding:112px 24px 40px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box;width:100%}
+h2{margin:0;font:800 clamp(30px,4vw,44px)/1.3 'SUIT';letter-spacing:-.05em;text-wrap:pretty}
+
+/* 4. 기능 카드 */
+.feature{max-width:1120px;margin:0 auto;padding:40px 24px;box-sizing:border-box;width:100%}
+.card{display:flex;flex-wrap:wrap;flex-direction:row;align-items:center;gap:56px;background:#F6F6F4;border-radius:32px;padding:56px clamp(24px,5vw,72px);overflow:hidden}
+.card.rev{flex-direction:row-reverse}
+.card-copy{flex:1 1 280px;display:flex;flex-direction:column;gap:16px}
+.tag{font:800 14px 'SUIT';color:#E5402B;letter-spacing:.02em}
+.card h3{margin:0;font:800 clamp(28px,3.4vw,38px)/1.3 'SUIT';letter-spacing:-.05em;color:#111;text-wrap:pretty}
+.card p{margin:0;font:500 17px/1.7 'SUIT';color:#6E6E6B;max-width:420px;text-wrap:pretty}
+.card-art{flex:1 1 280px;display:flex;justify-content:center}
+.phone{width:280px;padding:9px;background:#000;border-radius:48px;box-shadow:0 0 0 1px transparent,0 30px 60px -30px rgba(0,0,0,.35);box-sizing:content-box}
+.phone img{display:block;width:100%;height:auto;border-radius:39px}
+.card.dark{background:#111}
+.card.dark h3{color:#fff}
+.card.dark p{color:#A8A8A5}
+.card.dark .phone{box-shadow:0 0 0 1px #2A2A28,0 30px 60px -30px rgba(0,0,0,.35)}
+
+/* 02 공유 목업 */
+.share{flex:1 1 280px;display:flex;justify-content:center;align-items:flex-start;gap:20px;flex-wrap:nowrap;zoom:.74;min-width:0}
+.share-col{display:flex;flex-direction:column;align-items:center;gap:14px}
+.mock{width:228px;padding:8px;background:#000;border-radius:40px;box-shadow:0 30px 60px -30px rgba(0,0,0,.35);box-sizing:content-box}
+.mock-screen{height:480px;border-radius:32px;background:#fff;display:flex;flex-direction:column;overflow:hidden}
+.mock-screen.kakao{background:#B2C7D9}
+.status{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;font:700 11px 'SUIT'}
+.kakao .status{color:#1E2A35}
+.status .island{width:60px;height:17px;border-radius:9px;background:#000}
+.status .dots{font-size:9px}
+.packed{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 20px;text-align:center}
+.check{width:44px;height:44px;border-radius:50%;background:#111;display:flex;align-items:center;justify-content:center}
+.check span{width:15px;height:8px;border-left:2.5px solid #FFF;border-bottom:2.5px solid #FFF;transform:rotate(-45deg) translate(1px,-2px)}
+.packed-title{font:800 17px/1.3 'SUIT';letter-spacing:-.02em}
+.packed-sub{font:500 11px/1.55 'SUIT';color:#8A8A87}
+.send{padding:0 16px 22px;display:flex;flex-direction:column;gap:6px}
+.send div{height:40px;border-radius:12px;background:#F3F3F1;display:flex;align-items:center;justify-content:center;gap:6px;font:700 12px 'SUIT'}
+.send .kt{background:#FEE500;color:#191600}
+.send .kt span{width:14px;height:12px;border-radius:50%;background:#191600}
+.chat-title{height:36px;display:flex;align-items:center;padding:0 14px;font:800 13px 'SUIT';color:#1E2A35;white-space:pre}
+.chat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:0 12px 18px}
+.chat-name{font:700 10px 'SUIT';color:#3C4A57;padding-left:2px}
+.kcard{width:176px;background:#fff;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.kcard img{display:block;width:100%;height:auto}
+.kcard-text{padding:10px 11px 4px;display:flex;flex-direction:column;gap:4px}
+.kcard-title{font:800 11px/1.4 'SUIT'}
+.kcard-desc{font:500 9.5px/1.45 'SUIT';color:#6E6E6B}
+.kcard-btn{margin:8px 10px 10px;height:30px;border-radius:6px;background:#F3F3F1;display:flex;align-items:center;justify-content:center;font:700 11px 'SUIT'}
+.chat-input{height:38px;background:#fff;display:flex;align-items:center;padding:0 12px}
+.chat-input span{flex:1;height:24px;border-radius:12px;background:#F3F3F1}
+.caption{font:700 13px 'SUIT';color:#8A8A87}
+
+/* 5. 왜 테이프레터일까요 */
+.why{max-width:1120px;margin:0 auto;padding:112px 24px;box-sizing:border-box;width:100%;display:flex;flex-direction:column;gap:48px}
+.why-head{display:flex;flex-direction:column;gap:16px}
+.reasons{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.reason{background:#F6F6F4;border-radius:24px;padding:32px 28px;display:flex;flex-direction:column;gap:12px}
+.reason-t{font:800 22px/1.4 'SUIT';letter-spacing:-.04em}
+.reason-d{font:500 16px/1.7 'SUIT';color:#6E6E6B;text-wrap:pretty}
+
+/* 6. CTA */
+.cta{background:#111}
+.cta .wrap{padding:104px 24px;display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
+.cta h2{font-size:clamp(30px,4.4vw,48px);color:#fff}
+.cta .badges{flex-wrap:wrap;justify-content:center;gap:12px}
+.tape-box{width:256px;height:163px;transform:rotate(-4deg)}
+.tape-scale{width:320px;height:204px;transform:scale(.8);transform-origin:0 0}
+
+/* 카세트 (design_handoff_website/Tape.dc.html: shell #2A2A2A, edge #1E1E1E, band #2E6BD6) */
+.tape{width:320px;height:204px;position:relative;text-align:left}
+.tape *{box-sizing:content-box}
+.t-shell{position:absolute;inset:0;border-radius:10px;background:#2A2A2A;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.22),inset 1px 0 0 rgba(255,255,255,.08),0 1px 2px rgba(0,0,0,.25),0 16px 32px -8px rgba(0,0,0,.28)}
+.t-label{position:absolute;left:14px;right:14px;top:12px;height:134px;border-radius:6px;background:#F7F5F0;box-shadow:0 0 0 1px rgba(0,0,0,.06);overflow:hidden}
+.t-band{position:absolute;left:0;right:0;top:0;height:22px;background:#2E6BD6;display:flex;align-items:center;justify-content:space-between;padding:0 10px}
+.t-band .a{font:800 12px/1 'SUIT';color:#FFF}
+.t-band .len{font:700 10.5px/1 'SUIT';color:#FFF;letter-spacing:.06em}
+.t-title{position:absolute;left:12px;right:12px;top:26px;height:22px;display:flex;align-items:flex-end;border-bottom:1px solid #E2DED5}
+.t-title span{font:600 13px/1 'SUIT';color:#3A3A38;padding-bottom:4px}
+.t-rule{position:absolute;left:12px;right:12px;bottom:10px;height:1px;background:#E2DED5}
+.t-fine{position:absolute;left:12px;right:12px;bottom:4px;display:flex;justify-content:space-between;font:600 7px/1 'SUIT';color:#B3AEA3;letter-spacing:.12em}
+.t-window{position:absolute;left:72px;width:176px;top:62px;height:56px;border-radius:9px;background:linear-gradient(180deg,#2B2826,#171513);box-shadow:0 0 0 5px #2A2A2A,inset 0 2px 6px rgba(0,0,0,.7);overflow:hidden}
+.t-pack{position:absolute;top:28px;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#6B452C 0 38%,#4A2E1D 62%,#3A2315 90%,#2A180E);box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+.t-pack.l{left:30px;width:64px;height:64px}
+.t-pack.r{left:146px;width:30px;height:30px}
+.t-glass{position:absolute;left:56px;right:56px;top:9px;bottom:9px;border-radius:2px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.t-glass::before{content:'';position:absolute;left:4px;right:4px;top:4px;height:5px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.45) 0 1px,transparent 1px 7px)}
+.t-glass::after{content:'';position:absolute;left:4px;right:4px;bottom:4px;height:3px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.3) 0 1px,transparent 1px 7px)}
+.t-hub{position:absolute;top:14px;width:28px;height:28px;border-radius:50%;background:#EDEBE6;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.t-hub.l{left:16px}
+.t-hub.r{left:132px}
+.t-hub i{position:absolute;inset:6px;border-radius:50%;background:#1A1816}
+.t-hub b{position:absolute;left:12.5px;top:5px;width:3px;height:5px;background:#EDEBE6;transform-origin:1.5px 9px}
+.t-hub b:nth-of-type(2){transform:rotate(60deg)}
+.t-hub b:nth-of-type(3){transform:rotate(120deg)}
+.t-hub b:nth-of-type(4){transform:rotate(180deg)}
+.t-hub b:nth-of-type(5){transform:rotate(240deg)}
+.t-hub b:nth-of-type(6){transform:rotate(300deg)}
+.t-sheen{position:absolute;inset:0;background:linear-gradient(165deg,rgba(255,255,255,.16),transparent 40%);pointer-events:none}
+.t-edge{position:absolute;left:62px;right:62px;bottom:0;height:40px;background:#1E1E1E;clip-path:polygon(7% 0,93% 0,100% 100%,0 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.t-slot{position:absolute;bottom:0;background:#0E0D0C;border-radius:2px 2px 0 0}
+.t-slot::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:#5A3A26}
+.t-slot.c{left:50%;width:32px;height:12px;margin-left:-16px}
+.t-slot.c::before{content:'';position:absolute;left:9px;right:9px;top:3px;height:4px;background:#8C7F6A;border-radius:1px}
+.t-slot.m1{left:52px;width:12px;height:9px}
+.t-slot.m2{right:52px;width:12px;height:9px}
+.t-slot.o1{left:24px;width:10px;height:8px}
+.t-slot.o2{right:24px;width:10px;height:8px}
+.t-hole{position:absolute;bottom:15px;width:9px;height:9px;border-radius:50%;background:#0E0D0C}
+.t-hole.a{left:53px}
+.t-hole.b{right:53px}
+.t-screw{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#D8D8D6,#6E6E6C);box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.t-screw.a{left:6px;top:4px}
+.t-screw.b{right:6px;top:4px}
+.t-screw.c{left:6px;bottom:6px}
+.t-screw.d{right:6px;bottom:6px}
+.t-screw.e{left:50%;bottom:26px;margin-left:-4.5px}
+.t-grip{position:absolute;top:60px;width:6px;height:56px;background:repeating-linear-gradient(180deg,rgba(255,255,255,.12) 0 2px,transparent 2px 5px);border-radius:2px}
+.t-grip.a{left:4px}
+.t-grip.b{right:4px}
+
+/* 7. Footer */
+.footer{background:#F6F6F4}
+.footer .wrap{padding:64px 24px 40px;display:flex;flex-direction:column;gap:48px}
+.foot-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:40px}
+.foot-brand{display:flex;flex-direction:column;gap:12px;max-width:320px}
+.foot-brand .brand span{font-size:18px}
+.foot-about{font:500 14px/1.6 'SUIT';color:#6E6E6B}
+.foot-cols{display:flex;flex-wrap:wrap;gap:48px}
+.foot-col{display:flex;flex-direction:column;gap:10px}
+.foot-col h4{margin:0;font:800 14px 'SUIT'}
+.foot-col a{font:600 15px 'SUIT';color:#6E6E6B}
+.foot-col a[href]:hover{color:#E5402B}
+.foot-col .desc{font:500 13px 'SUIT';color:#9A9A97}
+.foot-bar{display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;padding-top:24px;box-shadow:0 -1px 0 #E3E3DF}
+.foot-links{display:flex;flex-wrap:wrap;gap:20px}
+.foot-links a{font:600 13px 'SUIT';color:#6E6E6B}
+.foot-links a.strong{font-weight:700;color:#111}
+.foot-links a:hover{color:#E5402B}
+.copy{font:500 13px 'SUIT';color:#9A9A97}
+
+/* 모바일 헤더: 배지 2개가 좁으면 배지를 32px로, 더 좁으면 워드마크를 숨긴다 (README 반응형) */
+@media (max-width:480px){
+.header .badge img{height:32px}
+}
+@media (max-width:360px){
+.header .brand span{display:none}
+}
+/* 좁은 화면: 공유 목업 두 대가 카드 안에 들어가게 더 줄인다 (디자인 원본은 .74 고정이라 390px에서 잘린다) */
+@media (max-width:600px){
+.share{zoom:.56}
+}

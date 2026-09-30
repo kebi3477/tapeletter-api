@@ -50,7 +50,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | 항목 | 규칙 |
 |---|---|
 | 기본 주소 | 개발: `http://<맥 IP>:3000/api` · 운영: `https://<도메인>/api` (Cloudflare Tunnel) |
-| 전역 prefix | 모든 API는 `/api`로 시작한다. 예외: 링크 웹 페이지 `GET /t/{token}`과 공유 이미지 `GET /t/{token}/*.png`, `/.well-known/*` |
+| 전역 prefix | 모든 API는 `/api`로 시작한다. 예외: 링크 웹 페이지 `GET /t/{token}`과 공유 이미지 `GET /t/{token}/*.png`, `/.well-known/*`. 루트 `/`(소개 사이트)는 api가 아니라 edge Caddy가 정적으로 서빙한다(`docs/deploy.md` 3-1) |
 | 형식 | 요청·응답 모두 JSON (`Content-Type: application/json`), 키는 **camelCase** |
 | 날짜 | ISO 8601 UTC 문자열. 예: `"2026-09-25T06:34:46.549Z"`. 화면의 `09.25`는 앱이 기기 시간대로 바꿔 만든다 |
 | ID | 모두 UUID 문자열 |
@@ -1042,6 +1042,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-09-30 | 루트 `/`에 소개 사이트(정적, edge Caddy가 서빙). API 변경 없음 |
 | 2026-09-30 | 아동 안전 정책 페이지 `GET /child-safety` 추가 (HTML, `/api` 밖, Google Play 아동 안전 표준 게시용, 한국어 본문 + 영어 요약). `/privacy`·`/terms` 아래에 이 페이지 링크 추가(문서 내용 변경 없음, 버전 그대로) |
 | 2026-09-30 | 링크 공유 이미지 `GET /t/{token}/kakao.png`(800×400)·`GET /t/{token}/og.png`(1200×630) 추가(보낸 사람 이름·길이, 받았거나 만료된 링크도 그림, 없으면 404, immutable 캐시). `/t/{token}`의 `og:title` "○○님이 목소리 테이프를 보냈어요", `og:description` "탭해서 소포를 뜯어보세요", `og:image` → `/t/{token}/og.png`(1200×630), `twitter:card` `summary_large_image`. `/static/og-image.png`는 유지 |
 | 2026-09-30 | 디자인 v9 테이프 메모: `PUT /shelf/items/{id}/memo` 추가(최대 40자, 빈 값·공백만·null이면 삭제, 나에게만 보임), ShelfItem에 `memo` 추가(SentTape에는 없음), 오류 코드 `INVALID_MEMO`, 테이프를 지우면 메모도 삭제. 개인정보 처리방침 1.5 |

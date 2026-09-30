@@ -1,0 +1,173 @@
+<!doctype html>
+<!--
+  tapeletter 소개 사이트 (https://tapeletter.lab241.com/). edge Caddy가 직접 서빙한다 (ops/edge/Caddyfile).
+  디자인 원본: design_handoff_website/Tapeletter Website.dc.html
+
+  [출시 후 할 일] 스토어 링크 (docs/deploy.md "소개 사이트")
+  - 스토어 배지는 출시 전이라 href 없이 둔다 (클릭 안 됨). 아래 두 속성이 붙은 <a> 3개씩에 href를 넣는다:
+      data-store="app-store"   → App Store 앱 페이지 URL
+      data-store="google-play" → Google Play 앱 페이지 URL
+    예) sed -i 's#data-store="app-store"#data-store="app-store" href="https://apps.apple.com/app/idXXXXXXXXX"#g' ops/edge/site/index.html
+  - iOS 스마트 배너: <head>에 <meta name="apple-itunes-app" content="app-id=XXXXXXXXX"> 추가
+  - 소식(Instagram): 계정이 생기면 footer의 주석 처리된 "소식" 열을 푼다
+-->
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tapeletter — 목소리를 테이프에 담아요</title>
+<meta name="description" content="엄마의 생일 축하, 아빠의 서툰 한마디. 소중한 사람의 목소리를 카세트테이프에 담아 보내고, 서랍에 평생 보관하세요.">
+<meta name="theme-color" content="#FFFFFF">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tapeletter">
+<meta property="og:title" content="tapeletter — 목소리를 테이프에 담아요">
+<meta property="og:description" content="엄마의 생일 축하, 아빠의 서툰 한마디. 소중한 사람의 목소리를 카세트테이프에 담아 보내고, 서랍에 평생 보관하세요.">
+<meta property="og:url" content="https://tapeletter.lab241.com/">
+<meta property="og:image" content="https://tapeletter.lab241.com/static/og-image.png">
+<meta property="og:image:width" content="600">
+<meta property="og:image:height" content="600">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css">
+<link rel="stylesheet" href="/site/style.css">
+</head>
+<body>
+<div class="page">
+
+<header class="header">
+<div class="wrap">
+<a class="brand" href="#top"><svg class="logo-mark" viewBox="0 0 48 48" width="28" height="28" aria-hidden="true"><mask id="wl1-m"><rect width="48" height="48" fill="#fff"/><circle cx="14" cy="23" r="3" fill="#000"/><circle cx="34" cy="23" r="3" fill="#000"/></mask><g fill="#E5402B" mask="url(#wl1-m)"><circle cx="14" cy="23" r="8.5"/><circle cx="34" cy="23" r="8.5"/><rect x="14" y="29" width="20" height="2.5"/></g></svg><span>tapeletter</span></a>
+<div class="badges"><a class="badge" data-store="app-store" aria-label="App Store에서 다운로드"><img src="/site/badges/app-store.svg" alt="App Store에서 다운로드" width="182" height="54"></a><a class="badge" data-store="google-play" aria-label="Google Play에서 다운로드"><img src="/site/badges/google-play.svg" alt="Google Play에서 다운로드" width="182" height="54"></a></div>
+</div>
+</header>
+
+<section class="hero" id="top">
+<div class="wrap">
+<div class="hero-copy">
+<div class="eyebrow">목소리 편지 앱</div>
+<h1>사진은 얼굴을,<br>테이프는 목소리를<br>남겨요.</h1>
+<p>엄마의 생일 축하, 아빠의 서툰 한마디. 소중한 사람의 목소리를 카세트테이프에 담아 보내고, 서랍에 평생 보관하세요.</p>
+<div class="badges"><a class="badge" data-store="app-store" aria-label="App Store에서 다운로드"><img src="/site/badges/app-store.svg" alt="App Store에서 다운로드" width="182" height="54"></a><a class="badge" data-store="google-play" aria-label="Google Play에서 다운로드"><img src="/site/badges/google-play.svg" alt="Google Play에서 다운로드" width="182" height="54"></a></div>
+<div class="hero-note">무료 · iPhone · Android</div>
+</div>
+<div class="hero-art">
+<div class="phones">
+<div class="circle"></div>
+<div class="phone-back l"><img src="/site/img/05_parcel.jpg" alt="소포 도착 화면" width="700" height="1521"></div>
+<div class="phone-back r"><img src="/site/img/04b_shelf_drawer.jpg" alt="서랍 화면" width="700" height="1521"></div>
+<div class="phone-front"><img src="/site/img/02_recording.jpg" alt="테이프로 녹음하는 화면" width="700" height="1521"></div>
+</div>
+</div>
+</div>
+</section>
+
+<section class="intro">
+<div class="eyebrow">이렇게 써요</div>
+<h2>녹음하고, 보내고, 모아두기.</h2>
+</section>
+
+<section class="feature">
+<div class="card">
+<div class="card-copy"><div class="tag">01 · 녹음</div><h3>REC 누르고, 말하면 끝.</h3><p>진짜 카세트 플레이어처럼 REC를 누르고 말하세요. 15초, 1분, 3분 테이프 중 담고 싶은 만큼 골라요.</p></div>
+<div class="card-art"><div class="phone"><img src="/site/img/01_record.jpg" alt="녹음 화면" width="700" height="1521" loading="lazy"></div></div>
+</div>
+</section>
+<section class="feature">
+<div class="card rev">
+<div class="card-copy"><div class="tag">02 · 보내기</div><h3>앱이 없어도 카톡으로 받아요.</h3><p>앱이 없는 가족에겐 카카오톡이나 문자로 링크를 보내요. 링크를 누르면 바로 소포를 뜯어 듣고, 앱을 받으면 서로 친구가 돼요.</p></div>
+<div class="share">
+<div class="share-col">
+<div class="mock"><div class="mock-screen">
+<div class="status"><span>9:41</span><span class="island"></span><span class="dots">●●●</span></div>
+<div class="packed"><div class="check"><span></span></div><div class="packed-title">테이프를 포장했어요</div><div class="packed-sub">링크를 보내면 테이프가 전달돼요.<br>받으면 서로 친구가 돼요.</div></div>
+<div class="send"><div class="kt"><span></span>카카오톡으로 보내기</div><div>문자로 보내기</div></div>
+</div></div>
+<div class="caption">보내는 사람</div>
+</div>
+<div class="share-col">
+<div class="mock"><div class="mock-screen kakao">
+<div class="status"><span>9:41</span><span class="island"></span><span class="dots">●●●</span></div>
+<div class="chat-title">‹  엄마</div>
+<div class="chat"><div class="chat-name">지현</div>
+<div class="kcard"><img src="/site/img/kakao-feed.jpg" alt="카카오톡 공유 카드" width="400" height="200"><div class="kcard-text"><div class="kcard-title">지현님이 목소리 테이프를 보냈어요</div><div class="kcard-desc">1분 테이프 · 탭해서 소포를 뜯어보세요</div></div><div class="kcard-btn">테이프 듣기</div></div>
+</div>
+<div class="chat-input"><span></span></div>
+</div></div>
+<div class="caption">받는 사람 · 카카오톡</div>
+</div>
+</div>
+</div>
+</section>
+<section class="feature">
+<div class="card dark">
+<div class="card-copy"><div class="tag">03 · 도착</div><h3>소포가 도착했어요.</h3><p>누가 보냈는지 보고, 탭해서 뜯어요. 받은 테이프엔 도착 시간과 나만의 메모를 남길 수 있어요.</p></div>
+<div class="card-art"><div class="phone"><img src="/site/img/05_parcel.jpg" alt="도착 화면" width="700" height="1521" loading="lazy"></div></div>
+</div>
+</section>
+<section class="feature">
+<div class="card rev">
+<div class="card-copy"><div class="tag">04 · 서랍</div><h3>가족의 목소리를 서랍에 모아요.</h3><p>생일, 승진 축하, 엄마 목소리. 이름 붙인 서랍에 테이프를 꽂아 추억별로 보관해요.</p></div>
+<div class="card-art"><div class="phone"><img src="/site/img/04b_shelf_drawer.jpg" alt="서랍 화면" width="700" height="1521" loading="lazy"></div></div>
+</div>
+</section>
+<section class="feature">
+<div class="card">
+<div class="card-copy"><div class="tag">05 · 재생</div><h3>생일에 받은 목소리, 한 번에.</h3><p>서랍째로 재생하면 받은 테이프가 순서대로 흘러나와요. 몇 년 뒤에 다시 들어도 그대로예요.</p></div>
+<div class="card-art"><div class="phone"><img src="/site/img/06_player.jpg" alt="재생 화면" width="700" height="1521" loading="lazy"></div></div>
+</div>
+</section>
+
+<section class="why">
+<div class="why-head">
+<div class="eyebrow">왜 테이프레터일까요</div>
+<h2>언젠가 그리워질 목소리,<br>지금 남겨두세요.</h2>
+</div>
+<div class="reasons">
+<div class="reason"><div class="reason-t">목소리는 사진이 못 남기는 걸 남겨요</div><div class="reason-d">웃음소리, 말버릇, 이름을 부르는 방식. 시간이 지날수록 가장 그리워지는 건 목소리예요.</div></div>
+<div class="reason"><div class="reason-t">짧아서 부담 없어요</div><div class="reason-d">15초면 충분해요. 긴 편지를 쓰지 않아도, 말 한마디가 선물이 돼요.</div></div>
+<div class="reason"><div class="reason-t">흩어지지 않고 모여요</div><div class="reason-d">메신저 음성 메시지는 대화에 묻혀요. 테이프는 서랍에 남아 언제든 다시 꺼내 들어요.</div></div>
+</div>
+</section>
+
+<section class="cta">
+<div class="wrap">
+<div class="tape-box" aria-hidden="true"><div class="tape-scale"><div class="tape">
+<div class="t-shell"></div>
+<div class="t-label"><div class="t-band"><span class="a">A</span><span class="len">1 MIN</span></div><div class="t-title"><span>이번 주말</span></div><div class="t-rule"></div><div class="t-fine"><span>NR</span><span>TYPE I · NORMAL</span></div></div>
+<div class="t-window"><div class="t-pack l"></div><div class="t-pack r"></div><div class="t-glass"></div><div class="t-hub l"><i></i><b></b><b></b><b></b><b></b><b></b><b></b></div><div class="t-hub r"><i></i><b></b><b></b><b></b><b></b><b></b><b></b></div><div class="t-sheen"></div></div>
+<div class="t-edge"><div class="t-slot c"></div><div class="t-slot m1"></div><div class="t-slot m2"></div><div class="t-slot o1"></div><div class="t-slot o2"></div><span class="t-hole a"></span><span class="t-hole b"></span></div>
+<span class="t-screw a"></span><span class="t-screw b"></span><span class="t-screw c"></span><span class="t-screw d"></span><span class="t-screw e"></span>
+<div class="t-grip a"></div><div class="t-grip b"></div>
+</div></div></div>
+<h2>이번 주말, 엄마 목소리<br>15초만 담아보세요.</h2>
+<div class="badges"><a class="badge" data-store="app-store" aria-label="App Store에서 다운로드"><img src="/site/badges/app-store.svg" alt="App Store에서 다운로드" width="182" height="54"></a><a class="badge" data-store="google-play" aria-label="Google Play에서 다운로드"><img src="/site/badges/google-play.svg" alt="Google Play에서 다운로드" width="182" height="54"></a></div>
+</div>
+</section>
+
+<footer class="footer">
+<div class="wrap">
+<div class="foot-top">
+<div class="foot-brand">
+<div class="brand"><svg class="logo-mark" viewBox="0 0 48 48" width="24" height="24" aria-hidden="true"><mask id="wl2-m"><rect width="48" height="48" fill="#fff"/><circle cx="14" cy="23" r="3" fill="#000"/><circle cx="34" cy="23" r="3" fill="#000"/></mask><g fill="#E5402B" mask="url(#wl2-m)"><circle cx="14" cy="23" r="8.5"/><circle cx="34" cy="23" r="8.5"/><rect x="14" y="29" width="20" height="2.5"/></g></svg><span>tapeletter</span></div>
+<div class="foot-about">소중한 사람의 목소리를 테이프에 담아요.</div>
+</div>
+<div class="foot-cols">
+<div class="foot-col"><h4>고객지원</h4><a href="mailto:kebi3477@naver.com?subject=%5Btapeletter%5D%20%EB%AC%B8%EC%9D%98">kebi3477@naver.com</a><div class="desc">앱 이용 · 결제 · 계정 문의</div></div>
+<div class="foot-col"><h4>광고 · 제휴</h4><a href="mailto:kebi3477@naver.com?subject=%5Btapeletter%5D%20%EA%B4%91%EA%B3%A0%C2%B7%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98">kebi3477@naver.com</a><div class="desc">브랜드 협업 · 광고 · 제휴 제안</div></div>
+<!-- 소식: Instagram 계정이 확인되면 푼다
+<div class="foot-col"><h4>소식</h4><a href="https://instagram.com/tapeletterapp">Instagram @tapeletterapp</a></div>
+-->
+</div>
+</div>
+<div class="foot-bar">
+<div class="foot-links"><a class="strong" href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/child-safety">아동 안전 정책</a></div>
+<div class="copy">© 2026 tapeletter</div>
+</div>
+</div>
+</footer>
+
+</div>
+</body>
+</html>

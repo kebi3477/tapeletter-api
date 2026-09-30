@@ -14,6 +14,8 @@
 ```
 인터넷 ─443─▶ 공유기 ─▶ myhandball-caddy (HTTPS, 인증서 자동)
                          └ tapeletter.lab241.com ─▶ cassette-edge:80 ─┬─ /cassette/* ─▶ s3:9000 (녹음 파일, presigned URL)
+                                                                     ├─ / · /site/* · /favicon.png · /apple-touch-icon.png ─▶ 소개 사이트 (ops/edge/site, 정적)
+                                                                     ├─ /app-ads.txt ─▶ edge가 직접 응답
                                                                      └─ 그 밖 ───────▶ api:3000 (/api, /t, /.well-known, /static, /privacy, /terms, /child-safety)
 ```
 
@@ -126,6 +128,28 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
 - 코드 되돌리기: `git checkout <이전 커밋>` → `up -d --build`. 새 마이그레이션이 들어간 배포를 되돌릴 때는 **먼저** 위 `migration:revert`를 새 코드 컨테이너에서 실행한 뒤 코드를 되돌린다.
 - 이미지 정리: `docker image prune -f` (가끔)
 - 모니터링: Uptime Kuma 등에서 `https://api.<도메인>/api/health`를 1분 간격으로 확인한다.
+- **edge(`ops/edge/Caddyfile`, `docker-compose.edge.yml`)가 바뀌면** edge 컨테이너를 다시 만든다. Caddyfile은 파일 하나를 마운트해서 `git pull`로 바뀐 내용이 컨테이너에 안 보일 수 있으므로 재시작이 아니라 재생성한다:
+  ```bash
+  docker compose -f docker-compose.yml -f docker-compose.edge.yml --env-file .env.production up -d --force-recreate edge
+  curl -sI https://tapeletter.lab241.com/ | head -1            # 200 (소개 사이트)
+  curl -s https://tapeletter.lab241.com/api/health             # api 그대로
+  ```
+- 소개 사이트 파일(`ops/edge/site/` 아래)만 바뀌었으면 폴더 마운트라 `git pull`만으로 바로 반영된다.
+
+## 3-1. 소개 사이트 (루트 도메인 `/`)
+
+- 앱 소개 랜딩 페이지. 디자인 원본은 저장소 바깥 `design_handoff_website/`(`Tapeletter Website.dc.html`의 인라인 스타일이 스펙). 순수 HTML/CSS이고 빌드 단계가 없다
+- 파일: `ops/edge/site/index.html`, `ops/edge/site/site/`(style.css, 배지 SVG, 스크린샷 JPEG 700px), `favicon.png`, `apple-touch-icon.png`. edge 컨테이너의 `/srv/site`로 읽기 전용 마운트한다
+- edge Caddy가 정확히 `/`, `/site/*`, `/favicon.png`, `/apple-touch-icon.png`만 직접 서빙하고, 나머지 경로(`/api`, `/t/*`, `/static/*`, `/privacy`, `/terms`, `/child-safety`, `/.well-known/*`, `/app-ads.txt`, 버킷 `/cassette/*`)는 예전 그대로다. `/index.html`은 api로 가서 404다
+- 외부 리소스는 SUIT 폰트(jsDelivr)만. CSP `default-src 'none'`, 스크립트 없음
+- **출시 후 할 일** (`index.html` 맨 위 주석에도 있다)
+  1. 스토어 배지 링크: 지금은 출시 전이라 `href`가 없어 클릭되지 않는다. `data-store="app-store"`·`data-store="google-play"`가 붙은 `<a>`(각 3개: 헤더, 히어로, 마지막 CTA)에 스토어 URL을 넣는다
+     ```bash
+     sed -i 's#data-store="app-store"#data-store="app-store" href="https://apps.apple.com/app/idXXXXXXXXX"#g; s#data-store="google-play"#data-store="google-play" href="https://play.google.com/store/apps/details?id=com.kebi.tapeletter"#g' ops/edge/site/index.html
+     ```
+  2. iOS 스마트 배너: `<head>`에 `<meta name="apple-itunes-app" content="app-id=XXXXXXXXX">`
+  3. 소식(Instagram): 계정을 만들면 footer의 주석 처리된 "소식" 열을 푼다
+  4. (선택) 한국어 공식 스토어 배지로 교체: `ops/edge/site/site/badges/`. 지금은 핸드오프의 영문 배지
 
 ---
 
@@ -242,6 +266,7 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
 | Kakao Developers | 플랫폼 → iOS 번들 ID / Android 패키지·키 해시 | 앱 설정 |
 | Uptime Kuma 등 | HTTP 모니터 | `https://api.<도메인>/api/health` |
 | App Store Connect · Google Play Console | 개인정보 처리방침 URL · (Play) 이용약관 | `https://<도메인>/privacy` · `https://<도메인>/terms` (지금 미니PC: `https://tapeletter.lab241.com/privacy`, `/terms`) |
+| App Store Connect · Google Play Console | 지원 URL · 마케팅 URL · 개발자 웹사이트 | `https://tapeletter.lab241.com/` (소개 사이트, 하단에 고객지원 메일·처리방침 링크) |
 | Google Play Console | 앱 콘텐츠 → 아동 안전 표준 | `https://<도메인>/child-safety` (지금 미니PC: `https://tapeletter.lab241.com/child-safety`) |
 
 ---

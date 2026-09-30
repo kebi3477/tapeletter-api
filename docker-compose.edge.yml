@@ -17,6 +17,8 @@ services:
       S3_BUCKET: ${S3_BUCKET:-cassette}
     volumes:
       - ./ops/edge/Caddyfile:/etc/caddy/Caddyfile:ro
+      # 소개 사이트 (루트 도메인 /)
+      - ./ops/edge/site:/srv/site:ro
     networks:
       default: {}
       proxy:
