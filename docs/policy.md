@@ -6,10 +6,12 @@
 |---|---|---|---|
 | 개인정보 처리방침 | `GET /privacy` | `src/policy/privacy-policy.ts` | 1.5 |
 | 이용약관 | `GET /terms` | `src/policy/terms.ts` | 1.4 |
+| 아동 안전 정책 | `GET /child-safety` | `src/policy/child-safety.ts` | 1.0 |
 
 - 렌더링: `src/policy/policy.html.ts` (SUIT, 토큰 색, 스크립트 없음, CSP nonce), 운영자 정보: `src/policy/policy.service.ts`
 - 운영자 정보는 환경 변수 `POLICY_OPERATOR_NAME`, `POLICY_CONTACT_EMAIL`, `POLICY_PRIVACY_OFFICER`, `POLICY_BUSINESS_INFO`, `POLICY_EFFECTIVE_DATE`에서 읽는다. 비어 있으면 "준비 중"으로 보이고, 운영에서는 시작할 때 경고 로그만 남긴다.
-- 스토어 등록 URL: `https://tapeletter.lab241.com/privacy`, `https://tapeletter.lab241.com/terms`
+- 스토어 등록 URL: `https://tapeletter.lab241.com/privacy`, `https://tapeletter.lab241.com/terms`, Google Play 아동 안전 표준: `https://tapeletter.lab241.com/child-safety`
+- 아동 안전 정책의 조치(콘텐츠 삭제, 계정 삭제, 관계 당국 신고)는 운영 도구가 없어 운영자가 확인한 뒤 직접 한다(`docs/deploy.md` "신고 처리"). 증거 보존은 적지 않았다: 신고 기록(3년) 말고 테이프 파일·계정 자료를 따로 보관하는 기능과 처리방침 항목이 없다. 보관하려면 처리방침에 항목을 추가해야 한다
 
 ## 작성 원칙
 
@@ -21,6 +23,7 @@
 
 | 버전 | 날짜 | 내용 |
 |---|---|---|
+| 아동 안전 정책 1.0 | 2026-09-30 | 최초 작성(`/child-safety`). 처리방침·약관은 아래쪽 링크만 추가해 버전 그대로 |
 | 처리방침 1.5 | 2026-09-30 | 테이프 메모(받은 테이프에 남기는 메모, 나에게만 보임, 최대 40자): 처리 항목 추가, 테이프를 지우거나 탈퇴하면 삭제. 약관은 1.4 그대로 |
 | 약관 1.4 | 2026-09-27 | 테이프 길이 변경(1분·3분·5분 → 15초·1분·3분): 용어 정의, 15초 무료·1분·3분 구매, 크레딧 사용처의 가격(1분 1개 30·5개 120, 3분 1개 50·5개 200). 처리방침은 테이프 길이를 적지 않아 1.4 그대로 |
 | 처리방침 1.4 · 약관 1.3 | 2026-09-26 | 서비스 이름 변경(카세트 → 테이프레터). 본문의 서비스 이름은 "tapeletter(테이프레터)", 상호가 비었을 때는 "테이프레터 운영자" |

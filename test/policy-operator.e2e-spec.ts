@@ -59,4 +59,23 @@ describe('정책 페이지 (e2e, 운영자 정보 있음)', () => {
     );
     expect(terms).toContain('이 약관은 2026-10-01부터 적용합니다.');
   });
+
+  it('아동 안전 정책: 담당자 이름·이메일, 시행일', async () => {
+    const html = (
+      await request(app.getHttpServer()).get('/child-safety').expect(200)
+    ).text;
+    expect(html).toContain(
+      '<td data-label="구분">담당자</td><td data-label="내용">&lt;b&gt;민경&lt;/b&gt;</td>',
+    );
+    expect(html).toContain(
+      '<td data-label="구분">이메일</td><td data-label="내용">help@tapeletter.test</td>',
+    );
+    expect(html).toContain('이메일로 신고: help@tapeletter.test');
+    expect(html).toContain(
+      'Child safety contact: &lt;b&gt;민경&lt;/b&gt;, help@tapeletter.test',
+    );
+    expect(html).toContain('시행일 2026-10-01');
+    expect(html).toContain('이 정책은 2026-10-01부터 적용합니다.');
+    expect(html).not.toContain('<b>민경</b>');
+  });
 });

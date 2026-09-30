@@ -11,7 +11,7 @@ import { PolicyService } from './policy.service.js';
 import type { PolicyDocument } from './types.js';
 
 /**
- * 개인정보 처리방침(`/privacy`)과 이용약관(`/terms`). `/api` 밖의 공개 HTML이다(app.setup.ts에서 prefix 제외).
+ * 개인정보 처리방침(`/privacy`), 이용약관(`/terms`), 아동 안전 정책(`/child-safety`). `/api` 밖의 공개 HTML이다(app.setup.ts에서 prefix 제외).
  * 앱의 설정 → 정보에서 열고, 스토어 등록 URL로도 쓴다.
  */
 @Public()
@@ -32,6 +32,12 @@ export class PolicyController {
   @Get('terms')
   terms(@Res() res: Response): void {
     this.send(res, this.policyService.terms(), '/terms');
+  }
+
+  /** 아동 안전 정책 (Google Play 아동 안전 표준 게시 요건) */
+  @Get('child-safety')
+  childSafety(@Res() res: Response): void {
+    this.send(res, this.policyService.childSafety(), '/child-safety');
   }
 
   private send(res: Response, doc: PolicyDocument, path: string): void {

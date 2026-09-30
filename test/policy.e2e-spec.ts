@@ -16,6 +16,7 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
   it.each([
     ['/privacy', '개인정보 처리방침'],
     ['/terms', '이용약관'],
+    ['/child-safety', '아동 안전 정책'],
   ])('%s: 200, CSP nonce, 스크립트 없음', async (path, title) => {
     const res = await request(app.getHttpServer()).get(path).expect(200);
     expect(res.headers['content-type']).toContain('text/html');
@@ -128,5 +129,32 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
       expect(html).toContain('테이프레터 운영자(이하');
       expect(html).not.toMatch(/cassette|카세트\(/);
     }
+  });
+
+  it('아동 안전 정책: 무관용, 신고 방법, 조치, 영어 요약, 세 페이지 서로 링크', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/child-safety')
+      .expect(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    const html = res.text;
+    expect(html).toContain('무관용 원칙');
+    expect(html).toContain('아동 성착취물(CSAM)');
+    expect(html).toContain('만 14세 이상만 가입해 이용할 수 있습니다');
+    expect(html).toContain('신고 방법');
+    expect(html).toContain('사유 &#39;성적인 내용&#39;');
+    expect(html).toContain('해당 콘텐츠를 즉시 삭제');
+    expect(html).toContain('이용약관 12조');
+    expect(html).toContain('방송통신심의위원회');
+    expect(html).toContain('아동 안전 담당자');
+    expect(html).toContain('<section id="english" lang="en">');
+    expect(html).toContain('zero tolerance');
+    expect(html).toContain('<a href="/terms">이용약관</a>');
+    expect(html).toContain('<a href="/privacy">개인정보 처리방침</a>');
+    for (const path of ['/privacy', '/terms']) {
+      const other = (await request(app.getHttpServer()).get(path)).text;
+      expect(other).toContain('<a href="/child-safety">아동 안전 정책</a>');
+    }
+    // /api 밖에서만 연다
+    await request(app.getHttpServer()).get('/api/child-safety').expect(404);
   });
 });

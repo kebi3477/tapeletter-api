@@ -14,7 +14,7 @@
 ```
 인터넷 ─443─▶ 공유기 ─▶ myhandball-caddy (HTTPS, 인증서 자동)
                          └ tapeletter.lab241.com ─▶ cassette-edge:80 ─┬─ /cassette/* ─▶ s3:9000 (녹음 파일, presigned URL)
-                                                                     └─ 그 밖 ───────▶ api:3000 (/api, /t, /.well-known, /static, /privacy, /terms)
+                                                                     └─ 그 밖 ───────▶ api:3000 (/api, /t, /.well-known, /static, /privacy, /terms, /child-safety)
 ```
 
 - 도메인 하나로 전부 받는다: `PUBLIC_BASE_URL=https://tapeletter.lab241.com`, `S3_PUBLIC_ENDPOINT=https://tapeletter.lab241.com`(버킷 경로 `/cassette/*`로 저장소(SeaweedFS)에 간다. 버킷 이름은 내부 이름이라 `cassette` 그대로).
@@ -242,6 +242,7 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
 | Kakao Developers | 플랫폼 → iOS 번들 ID / Android 패키지·키 해시 | 앱 설정 |
 | Uptime Kuma 등 | HTTP 모니터 | `https://api.<도메인>/api/health` |
 | App Store Connect · Google Play Console | 개인정보 처리방침 URL · (Play) 이용약관 | `https://<도메인>/privacy` · `https://<도메인>/terms` (지금 미니PC: `https://tapeletter.lab241.com/privacy`, `/terms`) |
+| Google Play Console | 앱 콘텐츠 → 아동 안전 표준 | `https://<도메인>/child-safety` (지금 미니PC: `https://tapeletter.lab241.com/child-safety`) |
 
 ---
 

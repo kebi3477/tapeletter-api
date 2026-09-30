@@ -29,7 +29,7 @@
 " 200
 	}
 
-	# 나머지: API(/api/*), 링크 페이지(/t/*), /.well-known/*, /static/*, 정책 페이지(/privacy, /terms)
+	# 나머지: API(/api/*), 링크 페이지(/t/*), /.well-known/*, /static/*, 정책 페이지(/privacy, /terms, /child-safety)
 	handle {
 		reverse_proxy cassette-api:3000 {
 			header_up X-Forwarded-For {http.request.header.X-Forwarded-For}

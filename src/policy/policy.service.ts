@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { childSafetyPolicy } from './child-safety.js';
 import { privacyPolicy } from './privacy-policy.js';
 import { termsOfService } from './terms.js';
 import { OperatorInfo, PENDING, PolicyDocument } from './types.js';
@@ -51,5 +52,9 @@ export class PolicyService implements OnModuleInit {
 
   terms(): PolicyDocument {
     return termsOfService(this.operator());
+  }
+
+  childSafety(): PolicyDocument {
+    return childSafetyPolicy(this.operator());
   }
 }

@@ -74,7 +74,7 @@ npm run migration:revert
 - e2e는 `cassette_test` DB를 쓴다. 시작할 때 스키마를 지우고 마이그레이션을 처음부터 적용한다 (`test/global-setup.ts`)
 - e2e는 로컬 Redis를 실제로 쓰고(BullMQ 접두어 `cassette-e2e`), 저장소와 ffmpeg는 `test/fakes.ts`의 메모리 저장소·가짜 ffmpeg로 바꾼다. 실제 ffmpeg 테스트는 ffmpeg가 있을 때만 돈다
 - 녹음 파일은 `StorageService`(S3 호환, SeaweedFS/R2)로만 다룬다. 변환 워커는 `recordings.processor.ts`이고 API 프로세스 안에서 돈다
-- 개인정보 처리방침·이용약관(`/privacy`, `/terms`)은 `src/policy/`에 있다. **이 저장소 코드가 실제로 수집·보관·전송하는 것만** 적는다. 저장 항목·보관 기간·외부 전송·가격·정책을 바꾸면 이 문서도 같은 커밋에서 고치고 version을 올린다. 법률 검토 전 초안이며 확인할 항목은 `docs/policy.md`
+- 개인정보 처리방침·이용약관·아동 안전 정책(`/privacy`, `/terms`, `/child-safety`)은 `src/policy/`에 있다. **이 저장소 코드가 실제로 수집·보관·전송하는 것만** 적는다. 저장 항목·보관 기간·외부 전송·가격·정책을 바꾸면 이 문서도 같은 커밋에서 고치고 version을 올린다. 법률 검토 전 초안이며 확인할 항목은 `docs/policy.md`
 - 신고(`POST /api/reports`)는 운영자에게 로그 `warn`과 `REPORT_WEBHOOK_URL`로만 알리고 개인정보는 넣지 않는다. 운영자 조회는 `ops/reports/reports.sh`
 - 개발 전용 API(`POST /api/auth/dev`, `/api/dev/*`, `/api/dev-storage/*`)는 `DevOnlyGuard`로 운영에서 404가 된다
 - 외부 서비스(카카오, Apple, App Store, Google Play, AdMob 키, FCM)는 서비스 클래스로 감싸고 e2e에서는 `test/fakes.ts`의 가짜로 바꾼다. 키가 없으면 결제 확인은 503, 푸시는 로그만, 탈퇴 연결 해제는 건너뛴다

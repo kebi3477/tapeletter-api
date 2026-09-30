@@ -337,6 +337,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | ✅ | GET | `/static/og-image.png` | 대표 이미지 600×600 (옛 앱 빌드·없는 링크 페이지용, `/api` 밖) @공개 |
 | ✅ | GET | `/privacy` | 개인정보 처리방침 (HTML, `/api` 밖) @공개 |
 | ✅ | GET | `/terms` | 이용약관 (HTML, `/api` 밖) @공개 |
+| ✅ | GET | `/child-safety` | 아동 안전 정책 (HTML, `/api` 밖, Google Play 아동 안전 표준) @공개 |
 | ✅ | GET | `/.well-known/apple-app-site-association` · `/.well-known/assetlinks.json` | 유니버설 링크·앱 링크 (`/api` 밖, 환경 변수가 없으면 404) @공개 |
 | ✅ | GET | `/wallet` | 잔액 + 오늘 남은 광고 |
 | ✅ | GET | `/wallet/ledger` | 크레딧 내역 |
@@ -770,6 +771,11 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 - 링크 웹 페이지와 같은 톤(SUIT, 토큰 색), 스크립트 없음, `Content-Security-Policy`는 요청마다 새 nonce(`style-src 'nonce-…'`, `script-src 'none'`)
 - 운영자 정보(상호, 보호책임자, 이메일, 사업자 정보, 시행일)는 환경 변수 `POLICY_*`에서 읽고, 비어 있으면 "준비 중"으로 표시한다
 - 내용과 버전 관리는 `src/policy/`, 확인이 필요한 항목은 `docs/policy.md`
+
+### ✅ `GET /child-safety` @공개 (`/api` 밖, HTML)
+아동 안전 정책(Google Play "아동 안전 표준" 게시 요건, `https://<도메인>/child-safety`). `/privacy`·`/terms`와 같은 레이아웃·CSP·`POLICY_*` 운영자 정보를 쓴다.
+- 한국어 본문(CSAE·CSAM 무관용, 만 14세 이상 가입, 앱 안 신고와 이메일 신고, 운영자 확인 뒤 콘텐츠 삭제·약관 12조 이용 제한·관계 당국 신고, 담당자 `POLICY_PRIVACY_OFFICER`·`POLICY_CONTACT_EMAIL`, 시행일 `POLICY_EFFECTIVE_DATE`) + 아래에 영어 요약(`lang="en"`)
+- 세 정책 페이지는 아래쪽에서 서로 링크한다
 ---
 
 ## 12-1. reports (신고)
@@ -1036,6 +1042,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-09-30 | 아동 안전 정책 페이지 `GET /child-safety` 추가 (HTML, `/api` 밖, Google Play 아동 안전 표준 게시용, 한국어 본문 + 영어 요약). `/privacy`·`/terms` 아래에 이 페이지 링크 추가(문서 내용 변경 없음, 버전 그대로) |
 | 2026-09-30 | 링크 공유 이미지 `GET /t/{token}/kakao.png`(800×400)·`GET /t/{token}/og.png`(1200×630) 추가(보낸 사람 이름·길이, 받았거나 만료된 링크도 그림, 없으면 404, immutable 캐시). `/t/{token}`의 `og:title` "○○님이 목소리 테이프를 보냈어요", `og:description` "탭해서 소포를 뜯어보세요", `og:image` → `/t/{token}/og.png`(1200×630), `twitter:card` `summary_large_image`. `/static/og-image.png`는 유지 |
 | 2026-09-30 | 디자인 v9 테이프 메모: `PUT /shelf/items/{id}/memo` 추가(최대 40자, 빈 값·공백만·null이면 삭제, 나에게만 보임), ShelfItem에 `memo` 추가(SentTape에는 없음), 오류 코드 `INVALID_MEMO`, 테이프를 지우면 메모도 삭제. 개인정보 처리방침 1.5 |
 | 2026-09-27 | **테이프 길이 변경(호환 안 됨)**: 1분·3분·5분 → **15초·1분·3분**. `tapeType` 코드가 **녹음 한도(초)**로 바뀐다: `1`→**`15`**(15초, 무료·무제한), `3`→**`60`**(1분), `5`→**`180`**(3분). 색·모양은 자리 그대로 옮긴다. 녹음 한도 15,000·60,000·180,000ms(+1초 오차), 옛 코드는 `400 VALIDATION_FAILED`. Me.tapes·구매 응답 `tapes`는 15·60·180. 상품 ID `tape3_1`·`tape3_5`·`tape5_1`·`tape5_5` → **`tape60_1`·`tape60_5`·`tape180_1`·`tape180_5`**(가격 30·120·50·200 그대로, 이름 "1분 테이프"·"3분 테이프 5개" 등). 원장 문구·푸시 문구·링크 웹 페이지 라벨(`15 SEC`·`1 MIN`·`3 MIN`)도 새 이름. 기존 데이터는 마이그레이션으로 옮긴다. 약관 1.4 |

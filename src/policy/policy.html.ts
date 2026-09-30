@@ -2,7 +2,7 @@ import { escapeHtml, LOGO, SUIT_CSS } from '../share/link-page.js';
 import { PENDING, PolicyDocument, PolicySection } from './types.js';
 
 /**
- * 정책 페이지 HTML (`/privacy`, `/terms`). 링크 웹 페이지와 같은 톤(SUIT, 디자인 토큰 색)이고,
+ * 정책 페이지 HTML (`/privacy`, `/terms`, `/child-safety`). 링크 웹 페이지와 같은 톤(SUIT, 디자인 토큰 색)이고,
  * 스크립트 없이 nonce가 붙은 <style> 하나만 쓴다(CSP).
  * ⚠️ 법률 전문가 검토 전 초안이다 (docs/policy.md). 이 표시는 페이지 본문에 노출하지 않는다.
  */
@@ -77,7 +77,8 @@ function section(s: PolicySection): string {
   }
   for (const n of s.notes ?? [])
     parts.push(`<p class="note">${escapeHtml(n)}</p>`);
-  return `<section id="${escapeHtml(s.id)}">${parts.join('')}</section>`;
+  const lang = s.lang ? ` lang="${escapeHtml(s.lang)}"` : '';
+  return `<section id="${escapeHtml(s.id)}"${lang}>${parts.join('')}</section>`;
 }
 
 export function renderPolicyPage(
@@ -85,10 +86,16 @@ export function renderPolicyPage(
   nonce: string,
   pageUrl: string,
 ): string {
-  const other =
-    doc.kind === 'privacy'
-      ? '<a href="/terms">이용약관</a>'
-      : '<a href="/privacy">개인정보 처리방침</a>';
+  const other = (
+    [
+      ['terms', '/terms', '이용약관'],
+      ['privacy', '/privacy', '개인정보 처리방침'],
+      ['child-safety', '/child-safety', '아동 안전 정책'],
+    ] as const
+  )
+    .filter(([kind]) => kind !== doc.kind)
+    .map(([, href, label]) => `<a href="${href}">${label}</a>`)
+    .join('');
   const toc = doc.sections
     .map(
       (s) =>

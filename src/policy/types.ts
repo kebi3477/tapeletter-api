@@ -17,10 +17,12 @@ export interface PolicySection {
   table?: PolicyTable;
   /** 표 아래 문단 */
   notes?: string[];
+  /** 본문과 다른 언어로 쓴 섹션 (예: 'en') */
+  lang?: string;
 }
 
 export interface PolicyDocument {
-  kind: 'privacy' | 'terms';
+  kind: 'privacy' | 'terms' | 'child-safety';
   title: string;
   version: string;
   /** 시행일 (YYYY-MM-DD) 또는 "준비 중" */

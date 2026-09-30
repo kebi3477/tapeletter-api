@@ -14,6 +14,7 @@ export function setupApp(app: INestApplication): INestApplication {
       { path: 'static/og-image.png', method: RequestMethod.GET },
       { path: 'privacy', method: RequestMethod.GET },
       { path: 'terms', method: RequestMethod.GET },
+      { path: 'child-safety', method: RequestMethod.GET },
       {
         path: '.well-known/apple-app-site-association',
         method: RequestMethod.GET,
