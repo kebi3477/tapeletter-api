@@ -12,9 +12,11 @@ import {
   PageContext,
   renderErrorPage,
   renderTapePage,
+  shareOgMeta,
   StoreLinks,
   SUIT_CSS,
 } from './link-page.js';
+import { ShareCardFormat, ShareCardService } from './share-card.service.js';
 import { ShareService } from './share.service.js';
 
 /** 앱의 커스텀 URL 스킴. "앱에서 열기"가 tapeletter://t/{token}을 연다 (앱에 등록 필요) */
@@ -46,6 +48,7 @@ const origin = (url: string | undefined): string | null => {
 export class LinkPageController {
   constructor(
     private readonly shareService: ShareService,
+    private readonly shareCard: ShareCardService,
     private readonly config: ConfigService,
   ) {}
 
@@ -62,8 +65,9 @@ export class LinkPageController {
     res.setHeader('X-Robots-Tag', 'noindex');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     try {
-      const preview = await this.shareService.webPreview(token);
-      res.type('html').send(renderTapePage(token, preview, ctx));
+      const { preview, card } = await this.shareService.webPage(token);
+      const og = shareOgMeta(card.name, `${ctx.pageUrl}/og.png`);
+      res.type('html').send(renderTapePage(token, preview, ctx, og));
     } catch (e) {
       if (!(e instanceof AppException)) throw e;
       res
@@ -73,7 +77,35 @@ export class LinkPageController {
     }
   }
 
-  /** 카카오톡·문자 미리보기용 대표 이미지 */
+  /** 카카오 피드 공유 이미지 800×400 (보낸 사람 이름 + 길이 라벨) */
+  @Get('t/:token/kakao.png')
+  kakaoCard(@Param('token') token: string, @Res() res: Response) {
+    return this.sendCard(token, 'wide', res);
+  }
+
+  /** 링크 미리보기(og:image) 1200×630 (헤드라인에 이름, 길이 라벨 없음) */
+  @Get('t/:token/og.png')
+  ogCard(@Param('token') token: string, @Res() res: Response) {
+    return this.sendCard(token, 'og', res);
+  }
+
+  /**
+   * 받았거나 만료된 링크도 그린다(이름·길이는 보낸 뒤 바뀌지 않는다). 없는 토큰은 404 LINK_NOT_FOUND.
+   * 내용이 바뀌지 않으므로 immutable로 1년 캐시한다
+   */
+  private async sendCard(
+    token: string,
+    format: ShareCardFormat,
+    res: Response,
+  ): Promise<void> {
+    const card = await this.shareService.card(token);
+    const png = await this.shareCard.render(format, card.name, card.tapeType);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.type('png').send(png);
+  }
+
+  /** 카카오톡·문자 미리보기용 대표 이미지 (옛 앱 빌드와 없는 링크 페이지가 쓴다) */
   @Get('static/og-image.png')
   ogImage(@Res() res: Response): void {
     res.setHeader('Cache-Control', 'public, max-age=86400');

@@ -19,8 +19,10 @@ import { AUDIO_URL_TTL_SEC } from '../recordings/recordings.constants.js';
 import { ShelfService } from '../shelf/shelf.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { User } from '../users/entities/user.entity.js';
+import { cardName } from './share-card.service.js';
 import {
   ClaimResponse,
+  ShareCard,
   SharePreview,
   WebPreview,
 } from './dto/share.response.js';
@@ -135,15 +137,41 @@ export class ShareService {
 
   /** 앱이 없는 사람의 웹 페이지용 미리보기 (로그인 없음) */
   async webPreview(token: string): Promise<WebPreview> {
+    return (await this.webPage(token)).preview;
+  }
+
+  /** 링크 웹 페이지(`/t/{token}`): 미리보기 + 공유 이미지·og 문구에 쓰는 이름 */
+  async webPage(
+    token: string,
+  ): Promise<{ preview: WebPreview; card: ShareCard }> {
     const d = await this.find(this.dataSource.manager, token, false);
     this.checkForWeb(d);
     return {
-      senderName: d.sender?.name ?? d.senderName,
+      preview: {
+        senderName: d.sender?.name ?? d.senderName,
+        tapeType: d.recording!.tapeType,
+        durationMs: d.recording!.durationMs,
+        tag: d.tag,
+        sentAt: d.sentAt.toISOString(),
+        expiresAt: d.shareExpiresAt!.toISOString(),
+      },
+      card: this.toCard(d),
+    };
+  }
+
+  /**
+   * 공유 이미지(`/t/{token}/kakao.png`·`og.png`)에 넣는 값. 받았거나 만료된 링크도 준다(이름·길이는 바뀌지 않는다).
+   * 없는 토큰이면 LINK_NOT_FOUND
+   */
+  async card(token: string): Promise<ShareCard> {
+    return this.toCard(await this.find(this.dataSource.manager, token, false));
+  }
+
+  /** 보낼 때 저장한 이름(sender_name)을 쓴다. 나중에 이름을 바꿔도 이미지 캐시가 어긋나지 않게 */
+  private toCard(d: Delivery): ShareCard {
+    return {
+      name: d.senderName === UNNAMED ? null : cardName(d.senderName),
       tapeType: d.recording!.tapeType,
-      durationMs: d.recording!.durationMs,
-      tag: d.tag,
-      sentAt: d.sentAt.toISOString(),
-      expiresAt: d.shareExpiresAt!.toISOString(),
     };
   }
 

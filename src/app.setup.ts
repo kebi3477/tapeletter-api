@@ -9,6 +9,8 @@ export function setupApp(app: INestApplication): INestApplication {
     // 링크 웹 페이지와 유니버설 링크·앱 링크 파일은 /api 밖에 둔다
     exclude: [
       { path: 't/:token', method: RequestMethod.GET },
+      { path: 't/:token/kakao.png', method: RequestMethod.GET },
+      { path: 't/:token/og.png', method: RequestMethod.GET },
       { path: 'static/og-image.png', method: RequestMethod.GET },
       { path: 'privacy', method: RequestMethod.GET },
       { path: 'terms', method: RequestMethod.GET },

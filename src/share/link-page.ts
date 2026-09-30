@@ -112,6 +112,32 @@ export interface PageContext {
   androidIntentUrl: string | null;
 }
 
+/** 링크 미리보기(Open Graph) 값. 없으면 페이지 제목·설명과 600×600 대표 이미지를 쓴다 */
+export interface OgMeta {
+  title: string;
+  description: string;
+  /** 절대 주소 */
+  image: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * 받을 수 있는 링크의 미리보기 문구 (design_handoff_kakao_share README "링크 미리보기 메타").
+ * 이름이 없으면 README 제안 "누군가 목소리를 보냈어요"에 맞춰 "누군가 목소리 테이프를 보냈어요"
+ */
+export function shareOgMeta(name: string | null, image: string): OgMeta {
+  return {
+    title: name
+      ? `${name}님이 목소리 테이프를 보냈어요`
+      : '누군가 목소리 테이프를 보냈어요',
+    description: '탭해서 소포를 뜯어보세요',
+    image,
+    width: 1200,
+    height: 630,
+  };
+}
+
 export const LOGO = (id: string, fill: string, size: number) =>
   `<svg viewBox="0 0 48 48" width="${size}" height="${size}" class="logo" aria-hidden="true"><mask id="${id}"><rect width="48" height="48" fill="#fff"/><circle cx="14" cy="23" r="3" fill="#000"/><circle cx="34" cy="23" r="3" fill="#000"/></mask><g fill="${fill}" mask="url(#${id})"><circle cx="14" cy="23" r="8.5"/><circle cx="34" cy="23" r="8.5"/><rect x="14" y="29" width="20" height="2.5"/></g></svg>`;
 
@@ -277,10 +303,21 @@ function head(opts: {
   description: string;
   ctx: PageContext;
   css: string;
+  og?: OgMeta;
 }): string {
   const { title, description, ctx } = opts;
   const t = escapeHtml(title);
   const d = escapeHtml(description);
+  const og = opts.og ?? {
+    title,
+    description,
+    image: ctx.ogImageUrl,
+    width: 600,
+    height: 600,
+  };
+  const ot = escapeHtml(og.title);
+  const od = escapeHtml(og.description);
+  const oi = escapeHtml(og.image);
   return `<!doctype html>
 <html lang="ko"><head>
 <meta charset="utf-8">
@@ -292,16 +329,16 @@ function head(opts: {
 <meta name="description" content="${d}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="tapeletter">
-<meta property="og:title" content="${t}">
-<meta property="og:description" content="${d}">
-<meta property="og:image" content="${escapeHtml(ctx.ogImageUrl)}">
-<meta property="og:image:width" content="600">
-<meta property="og:image:height" content="600">
+<meta property="og:title" content="${ot}">
+<meta property="og:description" content="${od}">
+<meta property="og:image" content="${oi}">
+<meta property="og:image:width" content="${og.width}">
+<meta property="og:image:height" content="${og.height}">
 <meta property="og:url" content="${escapeHtml(ctx.pageUrl)}">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="${t}">
-<meta name="twitter:description" content="${d}">
-<meta name="twitter:image" content="${escapeHtml(ctx.ogImageUrl)}">
+<meta name="twitter:card" content="${og.width > og.height ? 'summary_large_image' : 'summary'}">
+<meta name="twitter:title" content="${ot}">
+<meta name="twitter:description" content="${od}">
+<meta name="twitter:image" content="${oi}">
 <link rel="icon" href="${escapeHtml(ctx.ogImageUrl)}">
 <link rel="stylesheet" href="${SUIT_CSS}">
 <style nonce="${escapeHtml(ctx.nonce)}">${KEYFRAMES}${BASE_CSS}${opts.css}</style>
@@ -333,6 +370,7 @@ export function renderTapePage(
   token: string,
   p: WebPreview,
   ctx: PageContext,
+  og?: OgMeta,
 ): string {
   const tape = TAPES[p.tapeType];
   const name = escapeHtml(p.senderName);
@@ -382,6 +420,7 @@ ${tapeHtml(p.tapeType, date, p.senderName)}
       description: `${tape.name} 테이프 · 앱이 없어도 이 페이지에서 ${days}일 동안 들을 수 있어요`,
       ctx,
       css: WEB_CSS + TAPE_CSS,
+      og,
     }) + body
   );
 }

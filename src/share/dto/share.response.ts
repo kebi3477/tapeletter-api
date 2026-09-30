@@ -29,3 +29,10 @@ export interface WebPreview {
   sentAt: string;
   expiresAt: string;
 }
+
+/** 공유 이미지·링크 미리보기(og)에 넣는 값 */
+export interface ShareCard {
+  /** 최대 8자 + "…". 이름이 없으면 null (대체 문구 "누군가") */
+  name: string | null;
+  tapeType: TapeType;
+}

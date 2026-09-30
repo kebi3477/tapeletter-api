@@ -50,7 +50,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | 항목 | 규칙 |
 |---|---|
 | 기본 주소 | 개발: `http://<맥 IP>:3000/api` · 운영: `https://<도메인>/api` (Cloudflare Tunnel) |
-| 전역 prefix | 모든 API는 `/api`로 시작한다. 예외: 링크 웹 페이지 `GET /t/{token}`, `/.well-known/*` |
+| 전역 prefix | 모든 API는 `/api`로 시작한다. 예외: 링크 웹 페이지 `GET /t/{token}`과 공유 이미지 `GET /t/{token}/*.png`, `/.well-known/*` |
 | 형식 | 요청·응답 모두 JSON (`Content-Type: application/json`), 키는 **camelCase** |
 | 날짜 | ISO 8601 UTC 문자열. 예: `"2026-09-25T06:34:46.549Z"`. 화면의 `09.25`는 앱이 기기 시간대로 바꿔 만든다 |
 | ID | 모두 UUID 문자열 |
@@ -332,7 +332,9 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | ✅ | GET | `/share/{token}/web` | 링크 미리보기(웹) @공개 |
 | ✅ | POST | `/share/{token}/web/audio` | 웹 재생 URL @공개 |
 | ✅ | GET | `/t/{token}` | 모바일 웹 페이지(HTML, `/api` 밖) @공개 |
-| ✅ | GET | `/static/og-image.png` | 링크 미리보기 대표 이미지 (`/api` 밖) @공개 |
+| ✅ | GET | `/t/{token}/kakao.png` | 카카오 피드 공유 이미지 800×400 (`/api` 밖) @공개 |
+| ✅ | GET | `/t/{token}/og.png` | 링크 미리보기 이미지(og:image) 1200×630 (`/api` 밖) @공개 |
+| ✅ | GET | `/static/og-image.png` | 대표 이미지 600×600 (옛 앱 빌드·없는 링크 페이지용, `/api` 밖) @공개 |
 | ✅ | GET | `/privacy` | 개인정보 처리방침 (HTML, `/api` 밖) @공개 |
 | ✅ | GET | `/terms` | 이용약관 (HTML, `/api` 밖) @공개 |
 | ✅ | GET | `/.well-known/apple-app-site-association` · `/.well-known/assetlinks.json` | 유니버설 링크·앱 링크 (`/api` 밖, 환경 변수가 없으면 404) @공개 |
@@ -741,11 +743,26 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 - 문구는 원본 그대로이고, "앱이 없어도 이 페이지에서 **N일** 동안 들을 수 있어요"의 N은 `expiresAt`까지 남은 날(올림)
 - **앱에서 열기**: `tapeletter://t/{token}`(Android는 `intent://t/{token}#Intent;scheme=tapeletter;package=<ANDROID_PACKAGE_NAME>;…`)을 열고, 1.6초 안에 앱으로 넘어가지 않으면 스토어로 보낸다. **앱은 URL 스킴 `tapeletter`를 등록하고 `tapeletter://t/{token}`을 링크 열기(`GET /share/{token}`)로 처리해야 한다**
 - 상태별 응답: 받을 수 있음 `200` · 이미 받음 `409`(leOn taken) · 만료 `410`(leOn expired) · 없음 `404`(같은 톤의 "테이프를 찾을 수 없어요")
-- 카카오톡·문자 미리보기(Open Graph): `og:title` "○○님이 테이프를 보냈어요", `og:description` "1분 테이프 · 앱이 없어도 …"(테이프 이름: 15초·1분·3분, 라벨 `15 SEC`·`1 MIN`·`3 MIN`), `og:image` `https://<도메인>/static/og-image.png`(핸드오프 `assets/app-icon.svg`를 600×600 PNG로 변환)
+- 카카오톡·문자 미리보기(Open Graph, 받을 수 있는 링크, 핸드오프 `design_handoff_kakao_share` README): `og:title` "○○님이 목소리 테이프를 보냈어요"(이름이 없으면 "누군가 목소리 테이프를 보냈어요"), `og:description` "탭해서 소포를 뜯어보세요", `og:image` `https://<도메인>/t/{token}/og.png`, `og:image:width` 1200 · `og:image:height` 630, `twitter:card` `summary_large_image`. 페이지 `<title>`·`description`은 예전 그대로("○○님이 테이프를 보냈어요", "1분 테이프 · 앱이 없어도 …")
+- 이미 받음·만료·없음 화면의 미리보기는 그 화면 문구와 `https://<도메인>/static/og-image.png`(600×600)를 쓴다
 - 보안: 이름은 HTML 이스케이프, `Content-Security-Policy`는 요청마다 새 nonce(`script-src 'nonce-…'`, `style-src 'nonce-…' https://cdn.jsdelivr.net`, `default-src 'none'`), `Referrer-Policy: no-referrer`, `Cache-Control: no-store`
 - 웹은 로그인이 없어 **보낸 사람 본인인지 알 수 없다.** 그래서 웹에서는 `own` 화면을 띄우지 않고, 보낸 사람이 앱으로 링크를 열면 앱이 `LINK_OWN`을 받는다
 
-`GET /static/og-image.png`(대표 이미지), `/.well-known/apple-app-site-association`(`/t/*`), `/.well-known/assetlinks.json`도 제공한다(환경 변수 `APPLE_APP_ID`, `ANDROID_PACKAGE_NAME`, `ANDROID_SHA256_FINGERPRINTS`가 없으면 404).
+### ✅ `GET /t/{token}/kakao.png` · `GET /t/{token}/og.png` @공개 (`/api` 밖, PNG)
+링크 공유 이미지. 디자인은 `design_handoff_kakao_share`(`template/share-card.html`, `assets/*.png`)이고 서버가 satori + resvg로 그린다(폰트 SUIT 600·800 내장).
+
+| 경로 | 크기 | 내용 |
+|---|---|---|
+| `/t/{token}/kakao.png` | 800×400 | 카카오 피드(`Kakao.Share.sendDefault`의 `imageUrl`, `imageWidth: 800`, `imageHeight: 400`). 워드마크 + 길이 라벨(`15 SEC` #E5402B · `1 MIN` #2E6BD6 · `3 MIN` #111111) + 소포와 "보낸 사람" 라벨 |
+| `/t/{token}/og.png` | 1200×630 | 링크 미리보기(`og:image`). 헤드라인 "○○님이 / 목소리를 보냈어요", 길이 라벨 없음 |
+
+- 이름은 **보낼 때 저장한 보낸 사람 이름**(`sender_name`)이다. 나중에 이름을 바꿔도 이미지는 바뀌지 않는다. 최대 8자, 넘으면 8자 + "…"(라벨 칸이 좁아 긴 이름은 라벨 안에서 한 번 더 말줄임될 수 있다)
+- 이름이 없으면(`이름 없음`) "누군가": kakao는 라벨에 "누군가", og는 헤드라인 "누군가 / 목소리를 보냈어요"
+- 받았거나 만료된 링크도 `200`으로 그린다(이미 나간 카톡 미리보기가 깨지지 않게). 없는 토큰·모양이 틀린 토큰은 `404 LINK_NOT_FOUND`(JSON)
+- `Content-Type: image/png`, `Cache-Control: public, max-age=31536000, immutable`. 서버는 그린 PNG를 메모리 LRU(최대 500장, 형식·이름·길이 기준)에 담아 둔다
+- 요청 횟수 제한은 `/t/{token}`과 같다(IP당 분당 60회)
+
+`GET /static/og-image.png`(대표 이미지 600×600, 옛 앱 빌드가 쓰므로 유지), `/.well-known/apple-app-site-association`(`/t/*`), `/.well-known/assetlinks.json`도 제공한다(환경 변수 `APPLE_APP_ID`, `ANDROID_PACKAGE_NAME`, `ANDROID_SHA256_FINGERPRINTS`가 없으면 404).
 
 
 ### ✅ `GET /privacy` · `GET /terms` @공개 (`/api` 밖, HTML)
@@ -1019,6 +1036,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-09-30 | 링크 공유 이미지 `GET /t/{token}/kakao.png`(800×400)·`GET /t/{token}/og.png`(1200×630) 추가(보낸 사람 이름·길이, 받았거나 만료된 링크도 그림, 없으면 404, immutable 캐시). `/t/{token}`의 `og:title` "○○님이 목소리 테이프를 보냈어요", `og:description` "탭해서 소포를 뜯어보세요", `og:image` → `/t/{token}/og.png`(1200×630), `twitter:card` `summary_large_image`. `/static/og-image.png`는 유지 |
 | 2026-09-30 | 디자인 v9 테이프 메모: `PUT /shelf/items/{id}/memo` 추가(최대 40자, 빈 값·공백만·null이면 삭제, 나에게만 보임), ShelfItem에 `memo` 추가(SentTape에는 없음), 오류 코드 `INVALID_MEMO`, 테이프를 지우면 메모도 삭제. 개인정보 처리방침 1.5 |
 | 2026-09-27 | **테이프 길이 변경(호환 안 됨)**: 1분·3분·5분 → **15초·1분·3분**. `tapeType` 코드가 **녹음 한도(초)**로 바뀐다: `1`→**`15`**(15초, 무료·무제한), `3`→**`60`**(1분), `5`→**`180`**(3분). 색·모양은 자리 그대로 옮긴다. 녹음 한도 15,000·60,000·180,000ms(+1초 오차), 옛 코드는 `400 VALIDATION_FAILED`. Me.tapes·구매 응답 `tapes`는 15·60·180. 상품 ID `tape3_1`·`tape3_5`·`tape5_1`·`tape5_5` → **`tape60_1`·`tape60_5`·`tape180_1`·`tape180_5`**(가격 30·120·50·200 그대로, 이름 "1분 테이프"·"3분 테이프 5개" 등). 원장 문구·푸시 문구·링크 웹 페이지 라벨(`15 SEC`·`1 MIN`·`3 MIN`)도 새 이름. 기존 데이터는 마이그레이션으로 옮긴다. 약관 1.4 |
 | 2026-09-27 | 디자인 v3·v4: `POST /deliveries`의 `linkName`을 **선택 입력**으로(생략·null·빈 문자열 → `null` 저장, 값이 있을 때만 1~8자). `recipientId`가 없으면 링크로 보낸다. SentTape.`linkName`은 `null`일 수 있고, 받은 뒤에는 `recipient`가 채워져 앱은 `recipient`를 우선 표시. 디자인 원본 파일 이름 `TapeletterApp.logic.js`·`TapeletterApp.template.html` |
