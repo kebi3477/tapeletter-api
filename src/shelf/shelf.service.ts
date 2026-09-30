@@ -2,8 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager, IsNull } from 'typeorm';
 import { AppException } from '../common/errors/app.exception.js';
+import { normalizeMemo } from '../common/utils/display-text.js';
 import {
   RECEIVED_VIEWER_JOIN,
+  type ShelfItem,
   toShelfItem,
 } from '../deliveries/delivery.mapper.js';
 import { Delivery } from '../deliveries/entities/delivery.entity.js';
@@ -249,6 +251,22 @@ export class ShelfService {
     return toShelfItem(moved);
   }
 
+  /** 테이프 메모. 비우거나 null이면 지운다. 받는 사람만 바꿀 수 있고 보낸 사람에게는 보이지 않는다 */
+  async setMemo(
+    userId: string,
+    itemId: string,
+    raw: string | null,
+  ): Promise<ShelfItem> {
+    const memo = normalizeMemo(raw);
+    const item = await this.visibleItems(userId)
+      .andWhere('d.id = :itemId', { itemId })
+      .getOne();
+    if (!item) throw new AppException('TAPE_NOT_FOUND');
+    await this.dataSource.manager.update(Delivery, item.id, { memo });
+    item.memo = memo;
+    return toShelfItem(item);
+  }
+
   /**
    * 테이프 지우기. 받는 쪽에서만 사라지고(deleted_at) 파일도 지운다.
    * 보낸 사람의 보낸 테이프 목록에는 남는다(원래도 들을 수 없다).
@@ -265,6 +283,7 @@ export class ShelfService {
       await m.update(Delivery, item.id, {
         deletedAt: new Date(),
         groupId: null,
+        memo: null,
       });
       await m.update(Recording, item.recordingId, { purgedAt: new Date() });
       return item.recording!;

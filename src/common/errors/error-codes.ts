@@ -136,6 +136,10 @@ export const ErrorCodes = {
     status: HttpStatus.CONFLICT,
     message: '소포를 먼저 뜯어 주세요',
   },
+  INVALID_MEMO: {
+    status: HttpStatus.BAD_REQUEST,
+    message: '메모는 40자까지 적을 수 있어요',
+  },
   AUDIO_NOT_READY: {
     status: HttpStatus.CONFLICT,
     message: '테이프를 불러오지 못했어요',

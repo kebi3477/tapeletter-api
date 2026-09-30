@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
 } from '@nestjs/common';
 import {
   type AuthUser,
@@ -17,6 +18,7 @@ import {
 import type { ShelfItem } from '../deliveries/delivery.mapper.js';
 import { CreateGroupDto } from './dto/create-group.dto.js';
 import { MoveItemDto } from './dto/move-item.dto.js';
+import { SetMemoDto } from './dto/set-memo.dto.js';
 import type { GroupResponse, ShelfResponse } from './dto/shelf.response.js';
 import { UpdateGroupDto } from './dto/update-group.dto.js';
 import { ShelfService } from './shelf.service.js';
@@ -63,6 +65,16 @@ export class ShelfController {
     @Body() dto: MoveItemDto,
   ): Promise<ShelfItem> {
     return this.shelfService.moveItem(user.id, id, dto);
+  }
+
+  /** 테이프 메모 남기기·고치기·지우기 (나에게만 보임) */
+  @Put('items/:id/memo')
+  setMemo(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetMemoDto,
+  ): Promise<ShelfItem> {
+    return this.shelfService.setMemo(user.id, id, dto.memo);
   }
 
   @Delete('items/:id')

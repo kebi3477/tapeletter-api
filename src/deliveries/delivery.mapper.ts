@@ -30,6 +30,8 @@ export interface ShelfItem {
   openedAt: string | null;
   viaLink: boolean;
   groupId: string | null;
+  /** 받는 사람이 남긴 메모 (없으면 null). 나에게만 보인다 */
+  memo: string | null;
 }
 
 export type SentStatus =
@@ -77,6 +79,7 @@ export function toShelfItem(d: Delivery): ShelfItem {
     openedAt: iso(d.openedAt),
     viaLink: d.claimedAt !== null,
     groupId: d.groupId,
+    memo: d.memo,
   };
 }
 

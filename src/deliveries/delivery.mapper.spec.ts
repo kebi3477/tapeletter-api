@@ -1,4 +1,9 @@
-import { sentStatus, shareUrl, toSentTape } from './delivery.mapper.js';
+import {
+  sentStatus,
+  shareUrl,
+  toSentTape,
+  toShelfItem,
+} from './delivery.mapper.js';
 import type { Delivery } from './entities/delivery.entity.js';
 
 const base = (over: Partial<Delivery>): Delivery =>
@@ -13,6 +18,7 @@ const base = (over: Partial<Delivery>): Delivery =>
     shareExpiresAt: null,
     claimedAt: null,
     tag: null,
+    memo: null,
     sentAt: new Date('2026-09-25T00:00:00Z'),
     openedAt: null,
     groupId: null,
@@ -71,5 +77,13 @@ describe('보낸 테이프 상태', () => {
       now,
     );
     expect(t.openedAt).toBeNull();
+  });
+
+  it('받는 사람의 메모는 보낸 테이프 응답에 없다', () => {
+    const d = base({ recipientId: 'u2', openedAt: now, memo: '생일 아침' });
+    expect(toShelfItem(d).memo).toBe('생일 아침');
+    expect(JSON.stringify(toSentTape(d, 'https://x', now))).not.toContain(
+      '생일 아침',
+    );
   });
 });

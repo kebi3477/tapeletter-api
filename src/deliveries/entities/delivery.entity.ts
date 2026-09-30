@@ -61,6 +61,10 @@ export class Delivery {
   @Column({ type: 'varchar', length: 16, nullable: true })
   tag: Tag | null;
 
+  /** 받는 사람이 남긴 메모 (최대 40자). 받는 사람에게만 보이고 보낸 사람 응답에는 넣지 않는다 */
+  @Column({ type: 'varchar', length: 40, nullable: true })
+  memo: string | null;
+
   @Column({ name: 'sent_at', type: 'timestamptz', default: () => 'now()' })
   sentAt: Date;
 

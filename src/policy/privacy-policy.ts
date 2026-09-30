@@ -28,7 +28,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
   return {
     kind: 'privacy',
     title: '개인정보 처리방침',
-    version: '1.4',
+    version: '1.5',
     effectiveDate: op.effectiveDate,
     intro: [
       `${operator}(이하 '운영자')는 목소리를 테이프에 녹음해 보내는 앱 tapeletter(테이프레터)와 링크 웹 페이지(이하 '서비스')를 운영하면서, 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고 관련 고충을 빠르게 처리하기 위해 이 처리방침을 둡니다.`,
@@ -82,7 +82,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
             ],
             [
               '테이프',
-              '녹음 파일(테이프 소리로 바꾼 파일. 올린 원본 파일은 변환이 끝나면 바로 지웁니다), 테이프 종류와 길이, 보낸 사람과 받는 사람, 보낸 시각과 뜯은 시각, 태그, 보낼 때의 보낸 사람 이름, 링크로 보낼 때 라벨에 적은 받는 사람 이름, 공유 링크 값과 만료 시각, 서랍 칸 이름과 정렬 순서',
+              '녹음 파일(테이프 소리로 바꾼 파일. 올린 원본 파일은 변환이 끝나면 바로 지웁니다), 테이프 종류와 길이, 보낸 사람과 받는 사람, 보낸 시각과 뜯은 시각, 태그, 보낼 때의 보낸 사람 이름, 링크로 보낼 때 라벨에 적은 받는 사람 이름, 공유 링크 값과 만료 시각, 서랍 칸 이름과 정렬 순서, 받은 테이프에 남긴 메모(최대 40자, 나에게만 보임)',
               '이용자가 녹음하고 보낼 때. 녹음은 이용자가 녹음 버튼을 누른 동안에만 기기에서 하고, 보내려고 올린 파일만 서버에 저장합니다.',
             ],
             [
@@ -151,7 +151,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
               '탈퇴 즉시 삭제',
             ],
             [
-              '받은 테이프와 그 녹음 파일',
+              '받은 테이프와 그 녹음 파일, 받은 테이프에 남긴 메모',
               '받는 사람이 지우거나 탈퇴하면 즉시 삭제',
             ],
             [
@@ -326,6 +326,11 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
       },
     ],
     history: [
+      {
+        version: '1.5',
+        summary:
+          '테이프 메모 추가: 처리 항목에 받은 테이프에 남긴 메모(나에게만 보임), 테이프를 지우거나 탈퇴하면 삭제',
+      },
       {
         version: '1.4',
         summary: '서비스 이름 변경(카세트 → 테이프레터)',

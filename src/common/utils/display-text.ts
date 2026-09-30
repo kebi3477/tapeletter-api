@@ -22,6 +22,20 @@ export function normalizeNickname(raw: string | null): string | null {
   return nickname;
 }
 
+/** 테이프 메모 최대 글자 수 */
+export const MEMO_MAX_LENGTH = 40;
+
+/**
+ * 테이프 메모 규칙: 이름과 같은 규칙(앞뒤 공백 제거, 코드 포인트 기준 글자 수, 제어 문자·줄바꿈 금지)으로 최대 40자.
+ * 비우거나 null이면 메모를 지운다(null을 돌려준다).
+ */
+export function normalizeMemo(raw: string | null): string | null {
+  if (raw === null || raw.normalize('NFC').trim() === '') return null;
+  const memo = normalizeDisplayText(raw, MEMO_MAX_LENGTH);
+  if (memo === null) throw new AppException('INVALID_MEMO');
+  return memo;
+}
+
 /** 보여 주는 이름 공통 규칙. 1~max자(한글·이모지도 한 글자), 제어 문자 금지. 어기면 null */
 function normalizeDisplayText(raw: string, max: number): string | null {
   const text = raw.normalize('NFC').trim();

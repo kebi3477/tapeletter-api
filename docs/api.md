@@ -171,13 +171,15 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
   "opened": false,
   "openedAt": null,
   "viaLink": false,
-  "groupId": null
+  "groupId": null,
+  "memo": null
 }
 ```
 - `groupId: null` = "분류 안 함". `opened: false`면 소포 상태(`boxed`, "소포 도착")
 - 보낸 사람이 탈퇴했으면 `sender.userId: null`, `name`은 보낼 때의 이름
 - `durationMs`: **변환 후 ffprobe로 잰 실제 길이**. 재생 화면은 이 값을 쓴다(디자인의 `DUR`은 쓰지 않는다)
 - `viaLink`: 링크로 받은 테이프(소포 화면의 `viaLink` 칩)
+- `memo`: 받는 사람이 남긴 메모(없으면 `null`, 최대 40자). **나에게만 보이고** 보낸 사람 응답(SentTape)에는 없다. 바꾸기는 `PUT /shelf/items/{id}/memo`
 
 ### SentTape (보낸 테이프) ✅
 ```json
@@ -263,6 +265,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | `NOT_FRIEND` | 403 | 친구에게만 보낼 수 있어요 | | ✅ |
 | `TAPE_NOT_FOUND` | 404 | 테이프를 찾을 수 없어요 | | ✅ |
 | `TAPE_NOT_OPENED` | 409 | 소포를 먼저 뜯어 주세요 | | ✅ |
+| `INVALID_MEMO` | 400 | 메모는 40자까지 적을 수 있어요 | | ✅ |
 | `AUDIO_NOT_READY` | 409 | 테이프를 불러오지 못했어요 | | ✅ |
 | `GROUP_NOT_FOUND` | 404 | 칸을 찾을 수 없어요 | | ✅ |
 | `INVALID_GROUP_NAME` | 400 | 칸 이름은 1~12자로 적어주세요 | | ✅ |
@@ -322,6 +325,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | ✅ | PATCH | `/shelf/groups/{id}` | 칸 이름 바꾸기 / 순서 |
 | ✅ | DELETE | `/shelf/groups/{id}` | 칸 지우기 |
 | ✅ | PATCH | `/shelf/items/{id}` | 테이프 옮기기·정렬 |
+| ✅ | PUT | `/shelf/items/{id}/memo` | 테이프 메모 남기기·고치기·지우기 |
 | ✅ | DELETE | `/shelf/items/{id}` | 테이프 지우기 |
 | ✅ | GET | `/share/{token}` | 링크 열기(앱) |
 | ✅ | POST | `/share/{token}/claim` | 링크 테이프 받기 → 서로 친구 🔑 |
@@ -677,6 +681,15 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 응답 `200 ShelfItem`. 앱은 낙관적으로 먼저 옮기고, 실패하면 되돌린다.
 오류 `409 TAPE_NOT_OPENED`(안 뜯은 소포는 칸으로 못 옮긴다. "분류 안 함" 안에서 순서 바꾸기는 된다), `404 TAPE_NOT_FOUND`(`afterId`가 그 칸에 없을 때도), `404 GROUP_NOT_FOUND`
 
+### ✅ `PUT /shelf/items/{id}/memo`
+테이프 메모(`shMemo`, ⋯ 메뉴 "메모 남기기/메모 수정하기"). **나에게만 보인다**(보낸 사람에게는 보이지 않는다).
+```json
+{ "memo": "생일 아침에 받은 노래" }
+```
+- `memo` **필수**. 앞뒤 공백을 빼고 **최대 40자**(한글·이모지도 한 글자, 이름과 같은 규칙이라 줄바꿈 같은 제어 문자는 안 된다). **빈 문자열·공백만·`null`이면 메모를 지운다**
+- 응답 `200 ShelfItem`. 오류 `400 INVALID_MEMO`, `404 TAPE_NOT_FOUND`
+- 테이프를 지우면(`DELETE /shelf/items/{id}`) 메모도 지운다
+
 ### ✅ `DELETE /shelf/items/{id}`
 테이프 지우기(`itemDel`, "테이프를 지웠어요"). 파일도 지운다(보낸 사람도 못 듣기 때문에). 보낸 사람의 보낸 테이프 목록에는 남는다. `204`
 
@@ -949,7 +962,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 | 녹음 확인 `vConfirm` `convSlowOn` `convFailOn` | `POST /recordings` → PUT 업로드 → `POST /recordings/{id}/complete` → `GET /recordings/{id}` 1초 폴링 → 실패 시 `POST /recordings/{id}/retry` |
 | 받는 사람 `vPick` | `GET /friends` |
 | 라벨 `vLabel` · 포장 `vSending` · 발송 `vSent` · 실패 `sendFailOn` | `POST /deliveries` 🔑 |
-| 서랍 `vShelf` `fullOn` `emptyOn` | `GET /shelf`, 칸 `POST/PATCH/DELETE /shelf/groups`, 드래그·옮기기 `PATCH /shelf/items/{id}`, 지우기 `DELETE /shelf/items/{id}` |
+| 서랍 `vShelf` `fullOn` `emptyOn` | `GET /shelf`, 칸 `POST/PATCH/DELETE /shelf/groups`, 드래그·옮기기 `PATCH /shelf/items/{id}`, 메모 `PUT /shelf/items/{id}/memo`, 지우기 `DELETE /shelf/items/{id}` |
 | 소포 뜯기 `vParcel` | `POST /deliveries/{id}/open` |
 | 재생 `vPlay` `vLoadingOn` `vErrorOn` | `GET /deliveries/{id}/audio` |
 | 새 테이프 푸시 `pushOn` | `GET /deliveries/{id}` |
@@ -1006,6 +1019,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-09-30 | 디자인 v9 테이프 메모: `PUT /shelf/items/{id}/memo` 추가(최대 40자, 빈 값·공백만·null이면 삭제, 나에게만 보임), ShelfItem에 `memo` 추가(SentTape에는 없음), 오류 코드 `INVALID_MEMO`, 테이프를 지우면 메모도 삭제. 개인정보 처리방침 1.5 |
 | 2026-09-27 | **테이프 길이 변경(호환 안 됨)**: 1분·3분·5분 → **15초·1분·3분**. `tapeType` 코드가 **녹음 한도(초)**로 바뀐다: `1`→**`15`**(15초, 무료·무제한), `3`→**`60`**(1분), `5`→**`180`**(3분). 색·모양은 자리 그대로 옮긴다. 녹음 한도 15,000·60,000·180,000ms(+1초 오차), 옛 코드는 `400 VALIDATION_FAILED`. Me.tapes·구매 응답 `tapes`는 15·60·180. 상품 ID `tape3_1`·`tape3_5`·`tape5_1`·`tape5_5` → **`tape60_1`·`tape60_5`·`tape180_1`·`tape180_5`**(가격 30·120·50·200 그대로, 이름 "1분 테이프"·"3분 테이프 5개" 등). 원장 문구·푸시 문구·링크 웹 페이지 라벨(`15 SEC`·`1 MIN`·`3 MIN`)도 새 이름. 기존 데이터는 마이그레이션으로 옮긴다. 약관 1.4 |
 | 2026-09-27 | 디자인 v3·v4: `POST /deliveries`의 `linkName`을 **선택 입력**으로(생략·null·빈 문자열 → `null` 저장, 값이 있을 때만 1~8자). `recipientId`가 없으면 링크로 보낸다. SentTape.`linkName`은 `null`일 수 있고, 받은 뒤에는 `recipient`가 채워져 앱은 `recipient`를 우선 표시. 디자인 원본 파일 이름 `TapeletterApp.logic.js`·`TapeletterApp.template.html` |
 | 2026-09-27 | 크레딧 팩 상품 ID 변경: `credits_100`·`credits_550`·`credits_1200` → **`tapeletter.credits_100`·`tapeletter.credits_550`·`tapeletter.credits_1200`**(같은 Apple 개발자 팀의 다른 앱이 옛 ID를 이미 써서 새 앱에 만들 수 없었다). `GET /shop/products`의 `creditPacks[].productId`, `POST /billing/iap`·`POST /dev/credits`의 `productId`가 모두 새 ID다. 옛 ID는 `404 PRODUCT_NOT_FOUND` |

@@ -68,7 +68,10 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
 
   it('정책 결정 1.1 반영: 버전·개정 이력, 만 14세, 청약철회, 유효기간, 종료 30일, 원본 삭제, AdMob, 고지 기간', async () => {
     const privacy = (await request(app.getHttpServer()).get('/privacy')).text;
-    expect(privacy).toContain('버전 1.4');
+    expect(privacy).toContain('버전 1.5');
+    expect(privacy).toContain(
+      '받은 테이프에 남긴 메모(최대 40자, 나에게만 보임)',
+    );
     expect(privacy).toContain('<h2>개정 이력</h2>');
     expect(privacy).toContain('만 14세 이상만 이용할 수 있습니다');
     expect(privacy).toContain('테이프 소리로 변환이 끝나면 바로 삭제');
