@@ -151,10 +151,19 @@ export class LinkPageController {
     const base = this.config
       .getOrThrow<string>('PUBLIC_BASE_URL')
       .replace(/\/+$/, '');
+    // 출시 전에는 스토어 배지를 링크 없이 둔다 (STORE_LINKS_ENABLED=true로 켠다)
+    const enabled = this.config.get<boolean>('STORE_LINKS_ENABLED') === true;
     const links: StoreLinks = {
-      appStore: this.config.getOrThrow<string>('APP_STORE_URL_IOS'),
-      googlePlay: this.config.getOrThrow<string>('APP_STORE_URL_ANDROID'),
+      appStore: enabled
+        ? this.config.getOrThrow<string>('APP_STORE_URL_IOS')
+        : null,
+      googlePlay: enabled
+        ? this.config.getOrThrow<string>('APP_STORE_URL_ANDROID')
+        : null,
     };
+    const fallback = links.googlePlay
+      ? `S.browser_fallback_url=${encodeURIComponent(links.googlePlay)};`
+      : '';
     const pkg = this.config.get<string>('ANDROID_PACKAGE_NAME');
     const safeToken = encodeURIComponent(token);
     return {
@@ -164,28 +173,24 @@ export class LinkPageController {
       ogImageUrl: `${base}${OG_IMAGE_PATH}`,
       appUrl: `${APP_SCHEME}://t/${safeToken}`,
       androidIntentUrl: pkg
-        ? `intent://t/${safeToken}#Intent;scheme=${APP_SCHEME};package=${pkg};S.browser_fallback_url=${encodeURIComponent(links.googlePlay)};end`
+        ? `intent://t/${safeToken}#Intent;scheme=${APP_SCHEME};package=${pkg};${fallback}end`
         : null,
     };
   }
 
-  /** 인라인 스크립트·스타일은 요청마다 만든 nonce로만 실행된다 */
+  /**
+   * 인라인 스크립트·스타일은 요청마다 만든 nonce로만 실행된다.
+   * 웹 재생을 뺐으므로 오디오(media-src)·API 호출(connect-src)은 허용하지 않는다(default-src 'none')
+   */
   private csp(nonce: string): string {
     const suit = new URL(SUIT_CSS).origin;
     const self = origin(this.config.get<string>('PUBLIC_BASE_URL'));
-    const files = origin(
-      this.config.get<string>('S3_PUBLIC_ENDPOINT') ||
-        this.config.get<string>('S3_ENDPOINT'),
-    );
-    const media = ["'self'", self, files].filter(Boolean).join(' ');
     return [
       "default-src 'none'",
       `script-src 'nonce-${nonce}'`,
       `style-src 'nonce-${nonce}' ${suit}`,
       `font-src ${suit}`,
       `img-src 'self' ${self ?? ''} data:`.trim(),
-      `media-src ${media}`,
-      "connect-src 'self'",
       "base-uri 'none'",
       "form-action 'none'",
       "frame-ancestors 'none'",

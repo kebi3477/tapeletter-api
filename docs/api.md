@@ -62,7 +62,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | 빈 응답 | 돌려줄 게 없으면 `204 No Content` |
 | 목록 | `{ "items": [...] }`. 페이지가 있으면 `{ "items": [...], "nextCursor": "..." \| null }`, 요청은 `?cursor=&limit=` (limit 기본 30, 최대 100) |
 | 모르는 필드 | 요청 본문에 문서에 없는 필드가 있으면 `400 VALIDATION_FAILED` |
-| 요청 횟수 제한 | 공개 엔드포인트(auth: IP당 1분 20번, 링크 웹 페이지·`/share/*/web`: 60번, `/share/*/web/audio`: 30번)는 넘으면 `429 RATE_LIMITED` |
+| 요청 횟수 제한 | 공개 엔드포인트(auth: IP당 1분 20번, 링크 웹 페이지·`/share/*/web`: 60번)는 넘으면 `429 RATE_LIMITED` |
 
 ### 인증 흐름
 1. 카카오/Apple/Google SDK로 로그인 → 받은 토큰을 `POST /auth/kakao`, `POST /auth/apple`, `POST /auth/google` 중 하나로 보낸다.
@@ -335,7 +335,6 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | ✅ | GET | `/share/{token}` | 링크 열기(앱) |
 | ✅ | POST | `/share/{token}/claim` | 링크 테이프 받기 → 서로 친구 🔑 |
 | ✅ | GET | `/share/{token}/web` | 링크 미리보기(웹) @공개 |
-| ✅ | POST | `/share/{token}/web/audio` | 웹 재생 URL @공개 |
 | ✅ | GET | `/t/{token}` | 모바일 웹 페이지(HTML, `/api` 밖) @공개 |
 | ✅ | GET | `/t/{token}/kakao.png` | 카카오 피드 공유 이미지 800×400 (`/api` 밖) @공개 |
 | ✅ | GET | `/t/{token}/og.png` | 링크 미리보기 이미지(og:image) 1200×630 (`/api` 밖) @공개 |
@@ -755,21 +754,22 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 ```
 → 뜯기(`POST /deliveries/{id}/open`) → 재생 → "○○님과 친구가 되었어요"(`friend`가 있을 때). 오류는 위 표와 같다.
 
-### ✅ `GET /share/{token}/web` @공개 · `POST /share/{token}/web/audio` @공개
-앱이 없는 사람의 모바일 웹 페이지(`webOn`)용. 로그인 없이 부른다.
+### ✅ `GET /share/{token}/web` @공개
+앱이 없는 사람의 모바일 웹 페이지(`webOn`)용 미리보기. 로그인 없이 부른다. 재생 URL은 주지 않는다.
 - `web` → `{ "senderName", "tapeType", "durationMs", "tag", "sentAt", "expiresAt" }`
-- `web/audio` → `{ "url", "expiresAt", "durationMs" }` (10분)
-- 웹에서 들어도 받은 것(claim)으로 치지 않는다. 오류: `LINK_TAKEN`, `LINK_EXPIRED`, `LINK_NOT_FOUND`
+- 오류: `LINK_TAKEN`, `LINK_EXPIRED`, `LINK_NOT_FOUND`
+- ~~`POST /share/{token}/web/audio`~~ (웹 재생 URL): **2026-10-01에 없앴다(`404`).** 사용자 결정으로 테이프는 앱에서만 듣는다. 앱은 이 API를 쓰지 않았다
 
 ### ✅ `GET /t/{token}` @공개 (`/api` 밖, HTML)
-모바일 웹 페이지. 디자인 `webOn`·`leOn` 블록을 하이파이로 옮긴 서버 렌더 HTML 한 장이다(CSS·JS 인라인, 외부는 SUIT 폰트만).
-- 흐름: 소포 흔들림(`shake 2.2s`) → 탭해서 뜯기(`tearL`/`tearR` .7s, 750ms 뒤) → 테이프 등장(`insert` .7s) → 700ms 뒤 자동 재생(`POST /share/{token}/web/audio`의 URL, 릴 감김·진행 바) → 앱 설치 안내(App Store / Google Play, `APP_STORE_URL_*`)
-- 문구는 원본 그대로이고, "앱이 없어도 이 페이지에서 **N일** 동안 들을 수 있어요"의 N은 `expiresAt`까지 남은 날(올림)
-- **앱에서 열기**: `tapeletter://t/{token}`(Android는 `intent://t/{token}#Intent;scheme=tapeletter;package=<ANDROID_PACKAGE_NAME>;…`)을 열고, 1.6초 안에 앱으로 넘어가지 않으면 스토어로 보낸다. **앱은 URL 스킴 `tapeletter`를 등록하고 `tapeletter://t/{token}`을 링크 열기(`GET /share/{token}`)로 처리해야 한다**
+모바일 웹 페이지. 디자인 `webOn`·`leOn` 블록을 옮긴 서버 렌더 HTML 한 장이다(CSS·JS 인라인, 외부는 SUIT 폰트만).
+- **웹에서는 테이프를 재생하지 않는다(사용자 결정, 2026-10-01).** 디자인 원본 `webOn`의 "탭해서 뜯기 → 테이프 재생"(audio, 플레이어, 진행 바)은 뺐다. 테이프는 앱에서만 듣는다
+- 화면: 워드마크 → "○○님이 / 테이프를 보냈어요" + "1분 테이프 · MM.DD" → 흔들리는 소포(보낸 사람 태그) + "tapeletter 앱에서 들을 수 있어요" → 검은 버튼 "앱에서 열기" → 카드 "앱이 없다면 설치해 주세요 / 앱에서 소포를 뜯으면 ○○님과 친구가 되고, 이 테이프는 서랍에 담겨요." + App Store·Google Play 배지 → "이 링크는 **N일** 동안 열 수 있어요"(N은 `expiresAt`까지 남은 날, 올림)
+- 스토어 배지: 출시 전이라 `STORE_LINKS_ENABLED=false`(기본)면 `href` 없이 보인다. 켜면 `APP_STORE_URL_IOS`·`APP_STORE_URL_ANDROID`를 건다
+- **앱에서 열기**: `tapeletter://t/{token}`(Android는 `intent://t/{token}#Intent;scheme=tapeletter;package=<ANDROID_PACKAGE_NAME>;…`)을 연다. 같은 도메인 안의 이동이라 유니버설 링크·앱 링크로는 열리지 않아 스킴을 쓴다(카톡·문자에서 링크를 처음 누를 때는 유니버설 링크·앱 링크로 앱이 바로 열린다). 1.6초 안에 앱으로 넘어가지 않으면 스토어로 보내고, 스토어 주소가 없으면 "tapeletter 앱을 먼저 설치해 주세요"를 띄운다. **앱은 URL 스킴 `tapeletter`를 등록하고 `tapeletter://t/{token}`을 링크 열기(`GET /share/{token}`)로 처리해야 한다**
 - 상태별 응답: 받을 수 있음 `200` · 이미 받음 `409`(leOn taken) · 만료 `410`(leOn expired) · 없음 `404`(같은 톤의 "테이프를 찾을 수 없어요")
-- 카카오톡·문자 미리보기(Open Graph, 받을 수 있는 링크, 핸드오프 `design_handoff_kakao_share` README): `og:title` "○○님이 목소리 테이프를 보냈어요"(이름이 없으면 "누군가 목소리 테이프를 보냈어요"), `og:description` "탭해서 소포를 뜯어보세요", `og:image` `https://<도메인>/t/{token}/og.png`, `og:image:width` 1200 · `og:image:height` 630, `twitter:card` `summary_large_image`. 페이지 `<title>`·`description`은 예전 그대로("○○님이 테이프를 보냈어요", "1분 테이프 · 앱이 없어도 …")
+- 카카오톡·문자 미리보기(Open Graph, 받을 수 있는 링크, 핸드오프 `design_handoff_kakao_share` README): `og:title` "○○님이 목소리 테이프를 보냈어요"(이름이 없으면 "누군가 목소리 테이프를 보냈어요"), `og:description` "탭해서 소포를 뜯어보세요", `og:image` `https://<도메인>/t/{token}/og.png`, `og:image:width` 1200 · `og:image:height` 630, `twitter:card` `summary_large_image`. 페이지 `<title>`은 "○○님이 테이프를 보냈어요", `description`은 "1분 테이프 · tapeletter 앱에서 들을 수 있어요"
 - 이미 받음·만료·없음 화면의 미리보기는 그 화면 문구와 `https://<도메인>/static/og-image.png`(600×600)를 쓴다
-- 보안: 이름은 HTML 이스케이프, `Content-Security-Policy`는 요청마다 새 nonce(`script-src 'nonce-…'`, `style-src 'nonce-…' https://cdn.jsdelivr.net`, `default-src 'none'`), `Referrer-Policy: no-referrer`, `Cache-Control: no-store`
+- 보안: 이름은 HTML 이스케이프, `Content-Security-Policy`는 요청마다 새 nonce(`script-src 'nonce-…'`, `style-src 'nonce-…' https://cdn.jsdelivr.net`, `default-src 'none'`, 오디오·API 호출 허용 없음), `Referrer-Policy: no-referrer`, `Cache-Control: no-store`
 - 웹은 로그인이 없어 **보낸 사람 본인인지 알 수 없다.** 그래서 웹에서는 `own` 화면을 띄우지 않고, 보낸 사람이 앱으로 링크를 열면 앱이 `LINK_OWN`을 받는다
 
 ### ✅ `GET /t/{token}/kakao.png` · `GET /t/{token}/og.png` @공개 (`/api` 밖, PNG)
@@ -1029,7 +1029,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 | 설정 > 회원 탈퇴 `shWithdraw` | `DELETE /users/me` |
 | 설정 > 앱 버전 | `GET /app-version` (`latestVersion`) |
 | 링크 열기 `leOn`(taken/expired/own) · 앱에서 링크 `viaLink` | `GET /share/{token}` → `POST /share/{token}/claim` 🔑 |
-| 모바일 웹 `webOn` | `GET /t/{token}`, `GET /share/{token}/web`, `POST /share/{token}/web/audio` |
+| 모바일 웹 `webOn` | `GET /t/{token}`, `GET /share/{token}/web` (웹 재생 없음) |
 | 오프라인 `offlineOn` · 서버 오류 `serverOn` | 네트워크 오류 / `5xx` |
 
 ---
@@ -1066,6 +1066,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-01 | **웹 재생 제거(사용자 결정)**: `POST /share/{token}/web/audio` 삭제(`404`). `/t/{token}` 페이지에서 플레이어·audio·재생 스크립트를 빼고 "tapeletter 앱에서 들을 수 있어요" + "앱에서 열기". 스토어 배지는 `STORE_LINKS_ENABLED`(기본 false)일 때만 링크. 앱 claim·재생 API는 그대로. 개인정보 처리방침 1.8·이용약관 1.7 |
 | 2026-10-01 | 요청 기록: 모든 응답에 `X-Request-Id` 헤더, 앱 정보 헤더 `X-App-Version`·`X-App-Platform`(권장, 기록에만 씀). 응답 본문 변경 없음. 개인정보 처리방침 1.7 |
 | 2026-10-01 | **서랍 용량 규칙 변경**: 서랍 보관량 `stored`(`GET /shelf`, `Me.drawer`) = **뜯은 테이프 수**(안 뜯은 소포는 세지 않음). 받기는 늘 되고, 꽉 차면 `POST /deliveries/{id}/open`이 `409 DRAWER_FULL`(이미 뜯은 건 200). 한 칸 최대 10개: 그룹 응답에 `cap: 10`, `PATCH /shelf/items/{id}`로 다른 곳에서 넣을 때 `409 GROUP_FULL`. 오류 코드 `DRAWER_FULL`·`GROUP_FULL` 추가. `stats.receivedCount`는 안 뜯은 소포 포함(값 그대로). 서랍이 꽉 찬 사람에게 가는 테이프 도착 푸시 본문 변경. 이용약관 1.6 |
 | 2026-10-01 | Google 로그인 `POST /auth/google { idToken }` 추가(응답 `AuthResponse`, 오류 `SOCIAL_TOKEN_INVALID`·`SOCIAL_PROVIDER_UNAVAILABLE`·`REJOIN_RESTRICTED` 그대로). `Me.providers`에 `google`. `suggestedName`에 Google 이름. 환경 변수 `GOOGLE_CLIENT_IDS`. 개인정보 처리방침 1.6·이용약관 1.5 |

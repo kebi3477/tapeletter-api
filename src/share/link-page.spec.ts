@@ -32,15 +32,13 @@ const preview = {
 };
 
 describe('링크 웹 페이지 (webOn · leOn)', () => {
-  it('테이프 종류(초)별 라벨·이름: 15 SEC·15초, 1 MIN·1분, 3 MIN·3분', () => {
-    for (const [tapeType, len, name] of [
-      [15, '15 SEC', '15초'],
-      [60, '1 MIN', '1분'],
-      [180, '3 MIN', '3분'],
+  it('테이프 종류(초)별 이름: 15초 · 1분 · 3분', () => {
+    for (const [tapeType, name] of [
+      [15, '15초'],
+      [60, '1분'],
+      [180, '3분'],
     ] as const) {
       const html = renderTapePage('tok', { ...preview, tapeType }, ctx);
-      expect(html).toContain(`class="tape t${tapeType}"`);
-      expect(html).toContain(`<span class="len">${len}</span>`);
       expect(html).toContain(`${name} 테이프 · 09.25`);
     }
   });
@@ -62,20 +60,34 @@ describe('링크 웹 페이지 (webOn · leOn)', () => {
     );
   });
 
-  it('디자인 문구·구성: 제목, 1분 테이프 · MM.DD, 소포, 테이프, 앱 안내, 남은 기간', () => {
+  it('구성: 제목, 1분 테이프 · MM.DD, 소포·보낸 사람, 앱에서 듣기 안내, 앱에서 열기, 링크 기간 (웹 재생 없음)', () => {
     const html = renderTapePage('tok', { ...preview, senderName: '민경' }, ctx);
     expect(html).toContain('민경님이<br>테이프를 보냈어요');
     expect(html).toContain('1분 테이프 · 09.25');
-    expect(html).toContain('탭해서 뜯기');
-    expect(html).toContain('class="tape t60"');
-    expect(html).toContain('<span class="len">1 MIN</span>');
-    expect(html).toContain('0:34');
-    expect(html).toContain('앱에서 답장을 보낼 수 있어요');
     expect(html).toContain(
-      '앱을 설치하면 민경님과 친구가 되고,<br>이 테이프는 서랍에 담겨요.',
+      '<div class="k">보낸 사람</div><div class="n">민경</div>',
     );
-    expect(html).toContain('앱이 없어도 이 페이지에서 7일 동안 들을 수 있어요');
-    expect(html).toContain('앱에서 열기');
+    expect(html).toContain('tapeletter 앱에서 들을 수 있어요');
+    expect(html).toContain('>앱에서 열기</button>');
+    expect(html).toContain('앱이 없다면 설치해 주세요');
+    expect(html).toContain(
+      '앱에서 소포를 뜯으면 민경님과 친구가 되고,<br>이 테이프는 서랍에 담겨요.',
+    );
+    expect(html).toContain('이 링크는 7일 동안 열 수 있어요');
+    expect(html).not.toMatch(
+      /탭해서 뜯기|class="tape |<audio|new Audio|web\/audio/,
+    );
+    // 스토어 주소가 있으면 배지에 링크를 건다
+    expect(html).toContain(
+      '<a class="store" id="appStore" data-store="appStore" href="https://apps.apple.com/app/id1">',
+    );
+    const noLinks = renderTapePage('tok', preview, {
+      ...ctx,
+      links: { appStore: null, googlePlay: null },
+    });
+    expect(noLinks).toContain(
+      '<a class="store" id="googlePlay" data-store="googlePlay"><span',
+    );
     expect(html).toContain(`<script nonce="${ctx.nonce}">`);
     expect(html).toContain(`<style nonce="${ctx.nonce}">`);
     expect(html).not.toMatch(/ style="/);

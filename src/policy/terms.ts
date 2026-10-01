@@ -14,7 +14,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
   return {
     kind: 'terms',
     title: '이용약관',
-    version: '1.6',
+    version: '1.7',
     effectiveDate: op.effectiveDate,
     intro: [
       `이 약관은 ${operator}(이하 '운영자')가 제공하는 tapeletter(테이프레터) 앱과 웹 페이지(이하 '서비스')를 이용하는 조건과 절차, 운영자와 이용자의 권리·의무를 정합니다.`,
@@ -66,7 +66,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
         title: '5. 링크로 보내기',
         items: [
           '링크는 만든 때부터 7일 동안 유효하며, 한 사람만 받을 수 있습니다. 받은 사람과 보낸 사람은 서로 친구가 됩니다.',
-          '앱이 없는 사람도 7일 동안 웹 페이지에서 링크의 테이프를 들을 수 있습니다. 링크를 가진 사람은 누구나 들을 수 있으니 링크를 보낼 곳을 신중하게 골라 주세요.',
+          '링크의 테이프는 앱에서만 들을 수 있습니다. 앱이 없는 사람이 링크를 열면 웹 페이지에서 보낸 사람과 테이프 길이를 보고 앱으로 이동할 수 있습니다. 링크를 가진 사람은 누구나 먼저 받을 수 있으니 링크를 보낼 곳을 신중하게 골라 주세요.',
           '7일이 지나 만료된 링크는 보낸 사람이 앱에서 다시 공유하면 새 링크(7일)로 보낼 수 있습니다.',
         ],
       },
@@ -192,6 +192,10 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
       },
     ],
     history: [
+      {
+        version: '1.7',
+        summary: '링크의 테이프는 앱에서만 들을 수 있음(웹 페이지 재생 없앰)',
+      },
       {
         version: '1.6',
         summary:

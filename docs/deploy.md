@@ -151,6 +151,7 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
   2. iOS 스마트 배너: `<head>`에 `<meta name="apple-itunes-app" content="app-id=XXXXXXXXX">`
   3. 소식(Instagram): 계정을 만들면 footer의 주석 처리된 "소식" 열을 푼다
   4. (선택) 한국어 공식 스토어 배지로 교체: `ops/edge/site/site/badges/`. 지금은 핸드오프의 영문 배지
+  5. 링크 웹 페이지(`/t/{token}`)의 스토어 배지: `.env.production`에 `APP_STORE_URL_IOS`·`APP_STORE_URL_ANDROID`를 실제 주소로 넣고 `STORE_LINKS_ENABLED=true` → `up -d api`. 지금은 배지가 링크 없이 보이고, "앱에서 열기"가 실패하면 "tapeletter 앱을 먼저 설치해 주세요"만 띄운다
 
 ---
 
@@ -202,6 +203,7 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
 |---|---|---|
 | `APP_MIN_VERSION_IOS/ANDROID`, `APP_LATEST_VERSION_IOS/ANDROID` | 필수 | 강제 업데이트 기준 (`x.y.z`) |
 | `APP_STORE_URL_IOS`, `APP_STORE_URL_ANDROID` | 필수 | 스토어 주소 (기본값은 자리표시자) |
+| `STORE_LINKS_ENABLED` | 선택 | 기본 `false`(출시 전). `true`면 링크 웹 페이지의 스토어 배지에 위 주소를 건다 |
 | `APPLE_APP_ID` | 선택 | `<TEAM ID>.<번들 ID>`. 유니버설 링크 파일. 없으면 404 |
 | `ANDROID_PACKAGE_NAME`, `ANDROID_SHA256_FINGERPRINTS` | 선택 | 앱 링크 파일(assetlinks.json). Play Console → 앱 무결성 → 앱 서명 키 인증서 SHA-256 |
 

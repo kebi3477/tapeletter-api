@@ -75,8 +75,17 @@ describe('링크 웹 페이지 /t/{token} (e2e)', () => {
     expect(res.text).toContain(
       `<meta property="og:url" content="https://tapeletter.test/t/${token}">`,
     );
+    expect(res.text).toContain('1분 테이프 · tapeletter 앱에서 들을 수 있어요');
+
+    // 웹 재생 없음: audio 요소·재생 스크립트·재생 API 호출이 없다
+    expect(res.text).not.toMatch(
+      /<audio|new Audio|web\/audio|id="play"|class="player"/,
+    );
     expect(res.text).toContain(
-      '1분 테이프 · 앱이 없어도 이 페이지에서 7일 동안 들을 수 있어요',
+      '<div class="hint">tapeletter 앱에서 들을 수 있어요</div>',
+    );
+    expect(res.text).toContain(
+      '<button type="button" class="cta" id="openApp">앱에서 열기</button>',
     );
 
     // CSP: 요청마다 nonce, 인라인 스크립트·스타일은 그 nonce로만
@@ -87,7 +96,8 @@ describe('링크 웹 페이지 /t/{token} (e2e)', () => {
     expect(csp).toContain(
       `style-src 'nonce-${nonce}' https://cdn.jsdelivr.net`,
     );
-    expect(csp).toContain("connect-src 'self'");
+    expect(csp).not.toContain('media-src');
+    expect(csp).not.toContain('connect-src');
     expect(csp).toContain("frame-ancestors 'none'");
     expect(res.text).toContain(`<script nonce="${nonce}">`);
     expect(res.text).toContain(`<style nonce="${nonce}">`);
@@ -103,7 +113,11 @@ describe('링크 웹 페이지 /t/{token} (e2e)', () => {
     ).not.toBe(nonce);
 
     // 스토어·앱에서 열기
-    expect(res.text).toContain('href="https://apps.apple.com/app/id1"');
+    // 출시 전(STORE_LINKS_ENABLED 없음): 스토어 배지는 링크 없이
+    expect(res.text).toContain(
+      '<a class="store" id="appStore" data-store="appStore"><span',
+    );
+    expect(res.text).not.toContain('apps.apple.com');
     expect(res.text).toContain(`"appUrl":"tapeletter://t/${token}"`);
     expect(res.text).toContain('<span>tapeletter</span>');
     expect(res.text).toContain(
@@ -119,9 +133,7 @@ describe('링크 웹 페이지 /t/{token} (e2e)', () => {
       [id],
     );
     const res = await request(server()).get(`/t/${token}`).expect(200);
-    expect(res.text).toContain(
-      '앱이 없어도 이 페이지에서 3일 동안 들을 수 있어요',
-    );
+    expect(res.text).toContain('이 링크는 3일 동안 열 수 있어요');
   });
 
   it('이미 받은 링크 409 · 만료 410 · 없는 링크 404 (leOn 디자인)', async () => {

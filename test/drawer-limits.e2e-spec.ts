@@ -247,11 +247,13 @@ describe('서랍 용량(뜯기 제한) · 칸 10개 제한 (e2e)', () => {
       const g = await createGroup('넘친 칸');
       const extra = [];
       for (let i = 0; i < 11; i++) extra.push(await send(a, b));
-      await ds.query(
-        `UPDATE deliveries SET opened_at = now(), group_id = $2, position = 'a' || lpad(id::text, 40, '0')
-          WHERE id = ANY($1)`,
-        [extra, g.id],
-      );
+      // 올바른 fractional index(a0..a9, aA)로 칸에 바로 넣는다
+      for (const [i, id] of extra.entries()) {
+        await ds.query(
+          `UPDATE deliveries SET opened_at = now(), group_id = $2, position = $3 WHERE id = $1`,
+          [id, g.id, `a${'0123456789A'[i]}`],
+        );
+      }
       const s = await shelf(b);
       expect(
         s.groups.find((x: { id: string }) => x.id === g.id).items,

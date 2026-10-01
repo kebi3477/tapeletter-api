@@ -538,7 +538,8 @@ describe('보내기 · 서랍 · 링크 · 친구 테이프 · 탈퇴 (e2e)', ()
         .get(`/api/share/${token}/web`)
         .expect(200);
       expect(web.body.senderName).toBe('링크');
-      await request(server()).post(`/api/share/${token}/web/audio`).expect(200);
+      // 웹 재생은 없다 (앱에서만 듣는다)
+      await request(server()).post(`/api/share/${token}/web/audio`).expect(404);
       const html = await request(server()).get(`/t/${token}`).expect(200);
       expect(html.text).toContain('링크님이<br>테이프를 보냈어요');
 

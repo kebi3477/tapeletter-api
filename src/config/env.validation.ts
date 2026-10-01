@@ -355,6 +355,11 @@ export class EnvironmentVariables {
   @Matches(SEMVER)
   APP_LATEST_VERSION_IOS: string = '1.0.0';
 
+  /** 링크 웹 페이지(/t/{token})의 스토어 배지에 APP_STORE_URL_*를 건다. 출시 전에는 false(링크 없음) */
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  STORE_LINKS_ENABLED: boolean = false;
+
   @IsUrl()
   APP_STORE_URL_IOS: string = 'https://apps.apple.com/app/id0000000000';
 

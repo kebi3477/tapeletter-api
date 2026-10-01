@@ -46,24 +46,15 @@ export class ShareController {
     return this.shareService.claim(user.id, token);
   }
 
-  /** 웹 페이지용 미리보기 */
+  /**
+   * 웹 페이지용 미리보기 (재생 URL은 주지 않는다).
+   * 웹 재생 `POST /share/{token}/web/audio`는 2026-10-01에 없앴다(테이프는 앱에서만 듣는다)
+   */
   @Public()
   @UseGuards(PublicThrottlerGuard)
   @Throttle({ public: { limit: 60, ttl: 60_000 } })
   @Get(':token/web')
   web(@Param('token') token: string): Promise<WebPreview> {
     return this.shareService.webPreview(token);
-  }
-
-  /** 웹 재생 URL */
-  @Public()
-  @UseGuards(PublicThrottlerGuard)
-  @Throttle({ public: { limit: 30, ttl: 60_000 } })
-  @Post(':token/web/audio')
-  @HttpCode(HttpStatus.OK)
-  webAudio(
-    @Param('token') token: string,
-  ): Promise<{ url: string; expiresAt: string; durationMs: number }> {
-    return this.shareService.webAudio(token);
   }
 }

@@ -69,7 +69,7 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
 
   it('정책 결정 1.1 반영: 버전·개정 이력, 만 14세, 청약철회, 유효기간, 종료 30일, 원본 삭제, AdMob, 고지 기간', async () => {
     const privacy = (await request(app.getHttpServer()).get('/privacy')).text;
-    expect(privacy).toContain('버전 1.7');
+    expect(privacy).toContain('버전 1.8');
     expect(privacy).toContain('서비스 이용 기록(접속 로그)');
     expect(privacy).toContain(
       '30일. 기간이 지나면 매시간 도는 정리 작업과 리버스 프록시가 자동으로 삭제합니다',
@@ -100,7 +100,11 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
     );
 
     const terms = (await request(app.getHttpServer()).get('/terms')).text;
-    expect(terms).toContain('버전 1.6');
+    expect(terms).toContain('버전 1.7');
+    expect(terms).toContain('링크의 테이프는 앱에서만 들을 수 있습니다');
+    expect(terms).not.toContain(
+      '웹 페이지에서 링크의 테이프를 들을 수 있습니다',
+    );
     expect(terms).toContain('한 칸에는 테이프를 10개까지 넣을 수 있습니다');
     expect(terms).toContain('새 소포를 뜯을 수 없습니다');
     expect(terms).toContain(

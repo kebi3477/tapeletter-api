@@ -15,9 +15,7 @@ import { Block } from '../friends/entities/block.entity.js';
 import { Friendship } from '../friends/entities/friendship.entity.js';
 import { FriendsService, UNNAMED } from '../friends/friends.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
-import { AUDIO_URL_TTL_SEC } from '../recordings/recordings.constants.js';
 import { ShelfService } from '../shelf/shelf.service.js';
-import { StorageService } from '../storage/storage.service.js';
 import { User } from '../users/entities/user.entity.js';
 import { cardName } from './share-card.service.js';
 import {
@@ -39,7 +37,6 @@ export class ShareService {
     private readonly config: ConfigService,
     private readonly shelf: ShelfService,
     private readonly friends: FriendsService,
-    private readonly storage: StorageService,
     private readonly notifications: NotificationsService,
   ) {}
 
@@ -173,19 +170,6 @@ export class ShareService {
       name: d.senderName === UNNAMED ? null : cardName(d.senderName),
       tapeType: d.recording!.tapeType,
     };
-  }
-
-  /** 웹 재생 URL (로그인 없음). 들어도 받은 것으로 치지 않는다 */
-  async webAudio(
-    token: string,
-  ): Promise<{ url: string; expiresAt: string; durationMs: number }> {
-    const d = await this.find(this.dataSource.manager, token, false);
-    this.checkForWeb(d);
-    const key = d.recording!.processedKey;
-    if (!key || d.recording!.purgedAt)
-      throw new AppException('AUDIO_NOT_READY');
-    const signed = await this.storage.presignGet(key, AUDIO_URL_TTL_SEC);
-    return { ...signed, durationMs: d.recording!.durationMs };
   }
 
   /** @returns 내가 이미 받은 링크면 true */
