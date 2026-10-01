@@ -23,6 +23,8 @@ export default defineConfig({
         'postgres://localhost:5432/cassette_test',
       JWT_SECRET: 'e2e-test-secret-e2e-test-secret-0123456789',
       APPLE_CLIENT_IDS: 'app.tapeletter',
+      GOOGLE_CLIENT_IDS:
+        'web-1.apps.googleusercontent.com, web-2.apps.googleusercontent.com',
       KAKAO_APP_ID: '1234',
       REDIS_URL: process.env.TEST_REDIS_URL ?? 'redis://localhost:6379',
       BULLMQ_PREFIX: 'cassette-e2e',

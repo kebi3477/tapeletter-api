@@ -14,7 +14,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
   return {
     kind: 'terms',
     title: '이용약관',
-    version: '1.4',
+    version: '1.5',
     effectiveDate: op.effectiveDate,
     intro: [
       `이 약관은 ${operator}(이하 '운영자')가 제공하는 tapeletter(테이프레터) 앱과 웹 페이지(이하 '서비스')를 이용하는 조건과 절차, 운영자와 이용자의 권리·의무를 정합니다.`,
@@ -24,7 +24,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
         id: 'definitions',
         title: '1. 용어',
         items: [
-          '회원: 카카오 또는 Apple 계정으로 가입해 서비스를 이용하는 사람',
+          '회원: 카카오, Apple 또는 Google 계정으로 가입해 서비스를 이용하는 사람',
           '테이프: 회원이 15초·1분·3분 길이로 녹음해 보내는 음성',
           '링크: 친구가 아닌 사람에게 테이프를 보내려고 만드는 주소(https://…/t/…)',
           '크레딧: 서비스 안에서 테이프를 사거나 서랍을 넓히거나 선물하는 데 쓰는 단위. 스토어 결제로 충전한 크레딧(유료 크레딧)과, 가입 선물·광고 보상·친구에게 받은 선물로 받은 크레딧(무료 크레딧)이 있습니다.',
@@ -44,7 +44,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
         title: '3. 계정',
         items: [
           '서비스는 만 14세 이상만 가입해 이용할 수 있습니다. 만 14세 미만으로 확인되면 운영자는 계정과 정보를 삭제합니다.',
-          '가입은 카카오 또는 Apple 계정으로 합니다. 가입하면 가입 선물로 크레딧 10을 드립니다.',
+          '가입은 카카오, Apple 또는 Google 계정으로 합니다. 가입하면 가입 선물로 크레딧 10을 드립니다.',
           '이름은 1~8자로 정하며, 테이프를 주고받는 사람에게 보입니다. 다른 사람을 사칭하거나 불쾌감을 주는 이름은 쓸 수 없습니다.',
           '계정은 본인만 써야 하며, 계정을 남에게 넘기거나 빌려줄 수 없습니다.',
         ],
@@ -147,7 +147,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
           '회원은 앱의 마이 → 설정 → 회원 탈퇴에서 언제든지 탈퇴할 수 있으며, 탈퇴는 즉시 처리됩니다.',
           '탈퇴하면 받은 테이프와 크레딧(유료·무료 모두), 친구 목록이 모두 사라지고 되살릴 수 없습니다. 운영자는 탈퇴 화면에서 이를 미리 알립니다. 회원이 보낸 테이프는 받은 사람의 서랍에 남습니다.',
           '결제일부터 7일이 지나지 않은 쓰지 않은 유료 크레딧이 있다면, 탈퇴하기 전에 앱 마켓에 환불(청약철회)을 신청해 주세요. 탈퇴한 뒤에는 크레딧을 되살리거나 환불할 수 없습니다.',
-          '탈퇴하고 30일 동안은 같은 카카오·Apple 계정으로 다시 가입할 수 없습니다. 30일이 지나 다시 가입하면 새 계정으로 시작하며, 가입 선물도 다시 받습니다.',
+          '탈퇴하고 30일 동안은 같은 카카오·Apple·Google 계정으로 다시 가입할 수 없습니다. 30일이 지나 다시 가입하면 새 계정으로 시작하며, 가입 선물도 다시 받습니다.',
         ],
       },
       {
@@ -191,6 +191,10 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
       },
     ],
     history: [
+      {
+        version: '1.5',
+        summary: 'Google 계정으로 가입·로그인 추가',
+      },
       {
         version: '1.4',
         summary:

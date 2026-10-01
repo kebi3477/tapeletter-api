@@ -11,7 +11,7 @@ import { WithdrawnIdentity } from './entities/withdrawn-identity.entity.js';
 const DAY_MS = 86_400_000;
 
 /** 재가입 제한을 거는 로그인 방식 (개발 로그인은 제외) */
-const RESTRICTED: readonly AuthProvider[] = ['kakao', 'apple'];
+const RESTRICTED: readonly AuthProvider[] = ['kakao', 'apple', 'google'];
 
 /**
  * 탈퇴 후 재가입 제한. 탈퇴할 때 소셜 계정 해시와 탈퇴 시각만 남기고,

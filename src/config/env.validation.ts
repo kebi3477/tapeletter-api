@@ -324,6 +324,11 @@ export class EnvironmentVariables {
   @IsString()
   APPLE_CLIENT_IDS?: string;
 
+  /** Google ID 토큰의 aud로 허용할 값(OAuth 웹 클라이언트 ID). 쉼표로 구분. 없으면 Google 로그인은 503 */
+  @IsOptional()
+  @IsString()
+  GOOGLE_CLIENT_IDS?: string;
+
   /** 가입 선물 크레딧 */
   @Transform(({ value }) => Number(value))
   @IsInt()

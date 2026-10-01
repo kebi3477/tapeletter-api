@@ -63,7 +63,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | 요청 횟수 제한 | 공개 엔드포인트(auth: IP당 1분 20번, 링크 웹 페이지·`/share/*/web`: 60번, `/share/*/web/audio`: 30번)는 넘으면 `429 RATE_LIMITED` |
 
 ### 인증 흐름
-1. 카카오/Apple SDK로 로그인 → 받은 토큰을 `POST /auth/kakao` 또는 `POST /auth/apple`로 보낸다.
+1. 카카오/Apple/Google SDK로 로그인 → 받은 토큰을 `POST /auth/kakao`, `POST /auth/apple`, `POST /auth/google` 중 하나로 보낸다.
 2. 응답의 `accessToken`(기본 1시간)과 `refreshToken`(기본 60일)을 안전한 저장소(Keychain/Keystore)에 둔다.
 3. API가 `401 UNAUTHORIZED`를 주면 `POST /auth/refresh`로 새 토큰 쌍을 받고 원래 요청을 한 번 다시 보낸다.
    - refresh token은 **한 번 쓰면 사라진다**(회전). 새로 받은 refresh token으로 바꿔 저장한다.
@@ -122,7 +122,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | `stats.receivedCount` | 받은 테이프 수 = 보관량 (디자인과 같음) |
 | `stats.sentCount` | 보낸 테이프 수 (링크로 보낸 것 포함) |
 | `stats.friendCount` | 친구 수 (차단한 사람 제외) |
-| `providers` | 연결된 계정 (`kakao` · `apple` · `dev`) — 설정 > 연결된 계정 |
+| `providers` | 연결된 계정 (`kakao` · `apple` · `google` · `dev`) — 설정 > 연결된 계정 |
 
 ### 별명 (nickname) ✅
 상대 사용자를 보여 주는 모든 응답은 원래 이름 `name`과 함께 **내가 붙인 별명 `nickname`**(없으면 `null`)을 준다. 앱은 **`nickname ?? name`**으로 표시한다. 별명은 나에게만 보이고 상대에게는 영향이 없다(친구 관계가 방향이 있어서 내 쪽 줄에만 저장).
@@ -296,6 +296,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | ✅ | GET | `/app-version` | 강제 업데이트 확인 @공개 |
 | ✅ | POST | `/auth/kakao` | 카카오 로그인 @공개 |
 | ✅ | POST | `/auth/apple` | Apple 로그인 @공개 |
+| ✅ | POST | `/auth/google` | Google 로그인 (Android) @공개 |
 | ✅ | POST | `/auth/dev` | 개발 전용 로그인 @공개 (운영 404) |
 | ✅ | POST | `/auth/refresh` | 토큰 갱신 @공개 |
 | ✅ | POST | `/auth/logout` | 로그아웃 @공개 |
@@ -401,7 +402,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 }
 ```
 - `isNewUser`: 이번에 가입했으면 `true`. 가입하면 **가입 선물 10 크레딧**이 들어온다(내역 "가입 선물").
-- `suggestedName`: 이름 정하기 화면에 미리 채울 이름(카카오 닉네임 앞 8자). 없으면 `null`.
+- `suggestedName`: 이름 정하기 화면에 미리 채울 이름(카카오 닉네임·Google 계정 이름 앞 8자, 저장하지 않음). 없으면 `null`.
 - `user.name == null`이면 이름 정하기 → `PATCH /users/me { name }`.
 
 ### ✅ `POST /auth/kakao` @공개
@@ -421,6 +422,18 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 - Apple은 이름을 토큰에 넣지 않는다. 첫 로그인 때 SDK가 준 이름은 앱이 이름 정하기 화면에 미리 채운다.
 
 응답 `200 AuthResponse` · 오류 `401 SOCIAL_TOKEN_INVALID`, `503 SOCIAL_PROVIDER_UNAVAILABLE`, `403 REJOIN_RESTRICTED`(+`availableAt`)
+
+### ✅ `POST /auth/google` @공개
+Google 로그인(Android 로그인 화면에서 Apple 대신)의 **ID 토큰**을 보낸다. 서버는 플랫폼을 가리지 않는다.
+```json
+{ "idToken": "eyJ…" }
+```
+- 서버가 Google 공개 인증서로 서명, `iss`(`accounts.google.com` · `https://accounts.google.com`), `aud`(`GOOGLE_CLIENT_IDS`, **웹 애플리케이션 OAuth 클라이언트 ID**), 만료를 검사한다. 앱은 ID 토큰을 받을 때 `serverClientId`(Android Credential Manager / google_sign_in)를 이 웹 클라이언트 ID로 줘야 `aud`가 맞는다
+- 이메일은 `email_verified`가 true일 때만 저장한다. `name`은 `suggestedName`으로만 돌려주고 저장하지 않는다
+- 서버는 Google 액세스·refresh token을 받지 않으므로 탈퇴할 때 Google 쪽 연결 해제는 하지 않는다. 탈퇴 후 30일 재가입 제한은 카카오·Apple과 같다
+- `GOOGLE_CLIENT_IDS`가 비어 있으면 `503 SOCIAL_PROVIDER_UNAVAILABLE`
+
+응답 `200 AuthResponse` · 오류 `401 SOCIAL_TOKEN_INVALID`(잘못된 토큰, `aud`·`iss` 불일치, 만료), `503 SOCIAL_PROVIDER_UNAVAILABLE`(설정 없음, Google 인증서 조회 실패), `403 REJOIN_RESTRICTED`(+`availableAt`)
 
 ### ✅ `POST /auth/dev` @공개 · 개발 전용
 `NODE_ENV=production`이면 `404 NOT_FOUND`. 앱 개발과 e2e 테스트용.
@@ -977,7 +990,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 |---|---|
 | 스플래시 `splashOn` | `GET /app-version` → 미달이면 강제 업데이트 `updateOn`. 저장된 토큰이 있으면 `GET /users/me` |
 | 온보딩 `auOnb` | 없음 |
-| 로그인 `auLogin` | `POST /auth/kakao` · `POST /auth/apple` (개발: `POST /auth/dev`) |
+| 로그인 `auLogin` | `POST /auth/kakao` · `POST /auth/apple`(iOS) · `POST /auth/google`(Android) (개발: `POST /auth/dev`) |
 | 이름 정하기 `auName` | `PATCH /users/me { name }` (`suggestedName`으로 미리 채움) |
 | 마이크·알림 권한 `auMic` `auNoti` | 알림 허용 시 `PUT /notifications/devices`, 거부/나중에면 `PATCH /users/me { notificationsEnabled: false }` |
 | 녹음 대기 `vIdle` | `GET /users/me` (`tapes` → 개수 알약, 0개면 상점으로) |
@@ -1015,12 +1028,12 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 **확정 (2026-09-25)**. 탈퇴 화면 경고("받은 테이프와 크레딧이 모두 사라진다")에 맞춘다. `DELETE /users/me`는 **즉시·영구 삭제**(유예 기간 없음)다.
 
-**재가입 제한**: 탈퇴하고 **30일**(`REJOIN_COOLDOWN_DAYS`) 동안은 같은 카카오·Apple 계정으로 다시 가입할 수 없다(`403 REJOIN_RESTRICTED`, `availableAt`). 30일이 지나 다시 가입하면 새 계정이고 **가입 선물을 다시 받는다**. 개발 로그인(`/auth/dev`)에는 적용하지 않는다. 탈퇴하지 않은 계정의 로그인에는 영향이 없다.
+**재가입 제한**: 탈퇴하고 **30일**(`REJOIN_COOLDOWN_DAYS`) 동안은 같은 카카오·Apple·Google 계정으로 다시 가입할 수 없다(`403 REJOIN_RESTRICTED`, `availableAt`). 30일이 지나 다시 가입하면 새 계정이고 **가입 선물을 다시 받는다**. 개발 로그인(`/auth/dev`)에는 적용하지 않는다. 탈퇴하지 않은 계정의 로그인에는 영향이 없다.
 
 | 데이터 | 처리 | 상태 |
 |---|---|---|
 | 사용자(이름, 크레딧, 서랍 한도, 알림 설정) | 삭제 | ✅ |
-| 로그인 계정(카카오·Apple 연결), refresh token | 삭제 → 모든 기기 즉시 로그아웃 | ✅ |
+| 로그인 계정(카카오·Apple·Google 연결), refresh token | 삭제 → 모든 기기 즉시 로그아웃 | ✅ |
 | 친구 관계 (내 목록, 상대 목록의 나) | 양쪽 모두 삭제 | ✅ |
 | 차단 (내가 한 것, 나를 차단한 것) | 양쪽 모두 삭제 | ✅ |
 | 크레딧 원장, 보유 테이프, 멱등 키 | 삭제 | ✅ |
@@ -1032,6 +1045,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 | 광고 보상 기록 | 삭제 | ✅ |
 | Apple 로그인 | Apple 정책에 따라 토큰 철회(`appleid.apple.com/auth/revoke`, client_secret은 .p8로 서명한 JWT). 로그인 때 받은 `authorizationCode`로 얻어 둔 refresh token을 쓴다. 키나 토큰이 없으면 건너뛰고 로그만 | ✅ |
 | 카카오 로그인 | 카카오 연결 끊기(`/v1/user/unlink`, 어드민 키). 키가 없으면 건너뛰고 로그만 | ✅ |
+| Google 로그인 | 하지 않는다. 서버가 Google 액세스·refresh token을 받지 않아 철회할 토큰이 없다(사용자는 Google 계정 설정에서 해제할 수 있다) | ✅ |
 | **재가입 제한 기록** | 소셜 계정 식별자(provider, 회원번호/sub)는 **원문으로 남기지 않고** HMAC-SHA256 해시(`IDENTITY_HASH_KEY`)와 탈퇴 시각만 `withdrawn_identities`에 남긴다. **목적: 재가입 제한. 보관 기간: 30일**(지나면 매시간 정리 작업이 지운다). 해시 키 없이는 원래 계정을 알아낼 수 없다 | ✅ |
 
 소셜 연결 해제가 실패해도 탈퇴는 진행된다(이미 데이터를 지운 뒤에 부른다).
@@ -1042,6 +1056,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-01 | Google 로그인 `POST /auth/google { idToken }` 추가(응답 `AuthResponse`, 오류 `SOCIAL_TOKEN_INVALID`·`SOCIAL_PROVIDER_UNAVAILABLE`·`REJOIN_RESTRICTED` 그대로). `Me.providers`에 `google`. `suggestedName`에 Google 이름. 환경 변수 `GOOGLE_CLIENT_IDS`. 개인정보 처리방침 1.6·이용약관 1.5 |
 | 2026-09-30 | 루트 `/`에 소개 사이트(정적, edge Caddy가 서빙). API 변경 없음 |
 | 2026-09-30 | 아동 안전 정책 페이지 `GET /child-safety` 추가 (HTML, `/api` 밖, Google Play 아동 안전 표준 게시용, 한국어 본문 + 영어 요약). `/privacy`·`/terms` 아래에 이 페이지 링크 추가(문서 내용 변경 없음, 버전 그대로) |
 | 2026-09-30 | 링크 공유 이미지 `GET /t/{token}/kakao.png`(800×400)·`GET /t/{token}/og.png`(1200×630) 추가(보낸 사람 이름·길이, 받았거나 만료된 링크도 그림, 없으면 404, immutable 캐시). `/t/{token}`의 `og:title` "○○님이 목소리 테이프를 보냈어요", `og:description` "탭해서 소포를 뜯어보세요", `og:image` → `/t/{token}/og.png`(1200×630), `twitter:card` `summary_large_image`. `/static/og-image.png`는 유지 |

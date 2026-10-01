@@ -7,8 +7,9 @@ import { OperatorInfo, PENDING, PolicyDocument } from './types.js';
  *
  * 이 저장소 코드가 실제로 수집·보관·전송하는 것만 근거로 쓴다. 각 항목의 근거:
  * - 로그인: auth/entities/auth-identity.entity.ts (provider, provider_sub, email, provider_refresh_token)
- *   카카오 이메일은 is_email_valid·is_email_verified일 때만(auth/kakao.service.ts), Apple 이메일은 email_verified일 때만(auth/apple.service.ts).
- *   카카오 닉네임은 suggestedName 응답에만 쓰고 저장하지 않는다(auth/auth.service.ts).
+ *   카카오 이메일은 is_email_valid·is_email_verified일 때만(auth/kakao.service.ts), Apple·Google 이메일은 email_verified일 때만(auth/apple.service.ts, auth/google.service.ts).
+ *   카카오 닉네임·Google 이름은 suggestedName 응답에만 쓰고 저장하지 않는다(auth/auth.service.ts).
+ *   Google은 ID 토큰만 받고 액세스·리프레시 토큰을 받지 않아 탈퇴 때 연결 해제(철회)를 하지 않는다.
  * - 회원: users/entities/user.entity.ts · 로그인 유지: auth/entities/refresh-token.entity.ts (SHA-256 해시)
  * - 테이프: recordings/entities, deliveries/entities, shelf/entities · 파일: storage/ (변환본. 원본 raw는 변환이 끝나면 지운다: recordings.processor.ts)
  * - 친구·차단: friends/entities · 크레딧: wallet/entities, users/entities/tape-inventory.entity.ts
@@ -17,7 +18,7 @@ import { OperatorInfo, PENDING, PolicyDocument } from './types.js';
  * - 푸시: notifications/entities/device-token.entity.ts · 탈퇴 해시: auth/entities/withdrawn-identity.entity.ts
  * - 기간: JWT_REFRESH_TTL 60일, 멱등 키 24시간·방치 업로드 1시간(jobs/), 링크 7일(SHARE_LINK_TTL_MS),
  *   재가입 제한 30일(REJOIN_COOLDOWN_DAYS), 로그 10MB×5(docker-compose), DB 백업 14개(PG_BACKUP_KEEP)
- * - 외부 전송: auth/kakao.service.ts, auth/apple.service.ts, auth/apple-sign-in.service.ts,
+ * - 외부 전송: auth/kakao.service.ts, auth/apple.service.ts, auth/apple-sign-in.service.ts, auth/google.service.ts(공개 인증서 조회만),
  *   notifications/fcm.service.ts, billing/app-store.service.ts, billing/google-play.service.ts, billing/admob.service.ts
  * 저장 항목·보관 기간·외부 전송이 바뀌면 이 문서를 함께 고치고 version을 올린다.
  */
@@ -28,7 +29,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
   return {
     kind: 'privacy',
     title: '개인정보 처리방침',
-    version: '1.5',
+    version: '1.6',
     effectiveDate: op.effectiveDate,
     intro: [
       `${operator}(이하 '운영자')는 목소리를 테이프에 녹음해 보내는 앱 tapeletter(테이프레터)와 링크 웹 페이지(이하 '서비스')를 운영하면서, 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고 관련 고충을 빠르게 처리하기 위해 이 처리방침을 둡니다.`,
@@ -40,7 +41,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
         id: 'purpose',
         title: '1. 개인정보의 처리 목적',
         items: [
-          '회원 식별과 로그인 유지: 카카오·Apple 로그인으로 가입하고, 로그인 상태를 유지합니다.',
+          '회원 식별과 로그인 유지: 카카오·Apple·Google 로그인으로 가입하고, 로그인 상태를 유지합니다.',
           '테이프 서비스: 녹음 파일을 저장해 받는 사람에게 전달하고, 받는 사람만 재생할 수 있게 합니다. 서랍 정리, 보낸 테이프의 받음·들음 표시를 제공합니다.',
           '링크로 보내기: 링크를 가진 사람이 7일 동안 테이프를 받거나 웹에서 들을 수 있게 하고, 받으면 서로 친구로 이어 줍니다.',
           '친구와 차단: 친구 목록, 즐겨찾기, 차단한 사람의 테이프·선물을 받지 않게 하는 기능을 제공합니다.',
@@ -69,6 +70,11 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
               'Apple 로그인',
               'Apple 사용자 식별자, 이메일(Apple이 확인한 경우만, 가려진 주소일 수 있음), Apple refresh token(암호화해 저장)',
               '로그인할 때 Apple에서 받음. refresh token은 탈퇴할 때 Apple 연결을 해제하는 데만 씁니다.',
+            ],
+            [
+              'Google 로그인',
+              'Google 계정 식별자, 이메일(Google이 확인한 경우만)',
+              '로그인할 때 앱이 Google에서 받은 ID 토큰에서 확인함. Google 계정 이름은 이름 정하기 화면에 미리 채우는 데만 쓰고 저장하지 않습니다. Google 액세스 토큰이나 refresh token은 받지 않습니다.',
             ],
             [
               '회원 정보',
@@ -122,7 +128,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
             ],
             [
               '탈퇴 기록',
-              '카카오·Apple 계정 식별자를 HMAC-SHA256으로 바꾼 값, 탈퇴 시각',
+              '카카오·Apple·Google 계정 식별자를 HMAC-SHA256으로 바꾼 값, 탈퇴 시각',
               '탈퇴할 때 자동 생성. 원래 식별자는 남기지 않습니다.',
             ],
             [
@@ -231,6 +237,12 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
               '미국 · 로그인·탈퇴·결제할 때',
             ],
             [
+              'Google LLC (Google 로그인)',
+              'Google 로그인 확인',
+              '없음. 앱이 Google 계정으로 로그인해 받은 ID 토큰을 운영자 서버가 Google의 공개 인증서로 확인하며, 서버는 공개 인증서만 조회합니다.',
+              '미국 · 로그인할 때',
+            ],
+            [
               'Google LLC (Firebase Cloud Messaging)',
               '푸시 알림 발송',
               '알림 토큰, 알림 내용(보낸 사람 이름, 테이프 길이, 선물 크레딧 수)',
@@ -252,7 +264,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
         },
         notes: [
           '신고가 들어오면 운영자가 확인할 수 있도록 신고 번호, 사유, 대상 유형만 운영자의 알림 도구로 보내며, 이름·메모 등 개인정보는 보내지 않습니다.',
-          '위 곳들은 각자의 개인정보 처리방침에 따라 정보를 처리합니다. 국외 이전을 원하지 않으면 해당 기능을 쓰지 않을 수 있습니다(예: 알림 끄기, 결제·광고 보상을 이용하지 않기). 다만 로그인은 카카오나 Apple 중 하나가 필요합니다.',
+          '위 곳들은 각자의 개인정보 처리방침에 따라 정보를 처리합니다. 국외 이전을 원하지 않으면 해당 기능을 쓰지 않을 수 있습니다(예: 알림 끄기, 결제·광고 보상을 이용하지 않기). 다만 로그인은 카카오, Apple, Google 중 하나가 필요합니다.',
         ],
       },
       {
@@ -260,6 +272,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
         title: '6. 개인정보의 파기 절차와 방법',
         items: [
           '회원 탈퇴를 요청하면 즉시 데이터베이스에서 해당 정보를 삭제하고, 녹음 파일은 파일 저장소에서 삭제합니다.',
+          '탈퇴할 때 카카오는 연결을 끊고 Apple은 연결을 해제합니다. Google 로그인은 운영자가 Google 토큰을 갖고 있지 않아 Google 쪽 연결은 해제하지 않습니다. Google 계정 설정의 "타사 앱 및 서비스"에서 직접 해제할 수 있습니다.',
           '보유 기간이 정해진 정보(중복 요청 방지 기록, 올리다 만 녹음, 탈퇴 계정 해시)는 매시간 도는 정리 작업이 기간이 지나면 삭제합니다.',
           '법령에 따라 보관하는 결제 기록은 회원과의 연결을 끊은 상태로 보관하고, 보관 기간이 끝나면 삭제합니다.',
           '데이터베이스 백업은 최근 14개만 남기고 오래된 것부터 삭제합니다.',
@@ -326,6 +339,11 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
       },
     ],
     history: [
+      {
+        version: '1.6',
+        summary:
+          'Google 로그인 추가: 처리 항목(Google 계정 식별자, 확인된 이메일), Google LLC(로그인 확인), 탈퇴 시 Google 연결은 해제하지 않음',
+      },
       {
         version: '1.5',
         summary:

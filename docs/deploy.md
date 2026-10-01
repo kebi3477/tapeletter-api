@@ -190,6 +190,7 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
 |---|---|---|
 | `KAKAO_APP_ID` | 필수 | Kakao Developers → 내 애플리케이션 → 앱 키 화면의 **앱 ID**(숫자) |
 | `APPLE_CLIENT_IDS` | 필수 | iOS 번들 ID (웹 로그인을 쓰면 Services ID도 쉼표로) |
+| `GOOGLE_CLIENT_IDS` | 선택 | Google 로그인(Android)의 ID 토큰 `aud`로 받을 **웹 애플리케이션** OAuth 클라이언트 ID(Google Cloud 콘솔 → API 및 서비스 → 사용자 인증 정보, 앱의 `serverClientId`와 같은 값). 쉼표로 여러 개. 비우면 `POST /api/auth/google`은 503 |
 | `KAKAO_ADMIN_KEY` | 선택 | 앱 키의 **Admin 키**. 탈퇴 시 연결 끊기. 없으면 건너뜀 |
 | `APPLE_TEAM_ID` | 선택 | Apple Developer 멤버십의 Team ID. 탈퇴 시 Apple 토큰 철회 |
 | `APPLE_SIGN_IN_KEY_ID`, `APPLE_SIGN_IN_PRIVATE_KEY` | 선택 | Certificates, IDs & Profiles → Keys → "Sign in with Apple" 키(.p8). 내용을 한 줄로 넣을 때는 줄바꿈을 `\n`으로 |

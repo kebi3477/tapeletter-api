@@ -10,6 +10,7 @@ import { RefreshToken } from './entities/refresh-token.entity.js';
 import { KakaoService } from './kakao.service.js';
 import { AppleSignInService } from './apple-sign-in.service.js';
 import { RejoinService } from './rejoin.service.js';
+import { GoogleService } from './google.service.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { RejoinService } from './rejoin.service.js';
     AppleService,
     AppleSignInService,
     RejoinService,
+    GoogleService,
   ],
   exports: [AuthService, KakaoService, AppleSignInService, RejoinService],
 })

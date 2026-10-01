@@ -14,6 +14,7 @@ import { AuthService } from './auth.service.js';
 import { AppleLoginDto } from './dto/apple-login.dto.js';
 import type { AuthResponse, TokenPair } from './dto/auth.response.js';
 import { DevLoginDto } from './dto/dev-login.dto.js';
+import { GoogleLoginDto } from './dto/google-login.dto.js';
 import { KakaoLoginDto } from './dto/kakao-login.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 
@@ -39,6 +40,12 @@ export class AuthController {
       dto.nonce,
       dto.authorizationCode,
     );
+  }
+
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  google(@Body() dto: GoogleLoginDto): Promise<AuthResponse> {
+    return this.authService.loginWithGoogle(dto.idToken);
   }
 
   /** 개발 전용 로그인. NODE_ENV=production이면 404 */

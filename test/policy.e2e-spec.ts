@@ -62,14 +62,19 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
     expect(privacy).toContain('HMAC-SHA256');
     const terms = (await request(app.getHttpServer()).get('/terms')).text;
     expect(terms).toContain(
-      '탈퇴하고 30일 동안은 같은 카카오·Apple 계정으로 다시 가입할 수 없습니다',
+      '탈퇴하고 30일 동안은 같은 카카오·Apple·Google 계정으로 다시 가입할 수 없습니다',
     );
     expect(terms).toContain('하루 3번까지');
   });
 
   it('정책 결정 1.1 반영: 버전·개정 이력, 만 14세, 청약철회, 유효기간, 종료 30일, 원본 삭제, AdMob, 고지 기간', async () => {
     const privacy = (await request(app.getHttpServer()).get('/privacy')).text;
-    expect(privacy).toContain('버전 1.5');
+    expect(privacy).toContain('버전 1.6');
+    expect(privacy).toContain('Google LLC (Google 로그인)');
+    expect(privacy).toContain(
+      'Google 계정 식별자, 이메일(Google이 확인한 경우만)',
+    );
+    expect(privacy).toContain('Google 쪽 연결은 해제하지 않습니다');
     expect(privacy).toContain(
       '받은 테이프에 남긴 메모(최대 40자, 나에게만 보임)',
     );
@@ -88,7 +93,7 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
     );
 
     const terms = (await request(app.getHttpServer()).get('/terms')).text;
-    expect(terms).toContain('버전 1.4');
+    expect(terms).toContain('버전 1.5');
     expect(terms).toContain(
       '15초 테이프는 무료로 제한 없이 쓸 수 있고, 1분·3분 테이프는',
     );

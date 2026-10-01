@@ -16,6 +16,7 @@ import { AppleService } from './apple.service.js';
 import { AuthResponse, TokenPair } from './dto/auth.response.js';
 import { AuthIdentity, AuthProvider } from './entities/auth-identity.entity.js';
 import { RefreshToken } from './entities/refresh-token.entity.js';
+import { GoogleService } from './google.service.js';
 import { KakaoService } from './kakao.service.js';
 import { SocialProfile } from './social-profile.js';
 
@@ -44,6 +45,7 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly kakao: KakaoService,
     private readonly apple: AppleService,
+    private readonly google: GoogleService,
     private readonly appleSignIn: AppleSignInService,
     private readonly wallet: WalletService,
     private readonly users: UsersService,
@@ -73,6 +75,12 @@ export class AuthService {
       }
     }
     return response;
+  }
+
+  /** Google 로그인 (Android). 탈퇴 때 철회할 Google 토큰은 받지 않는다 */
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    const profile = await this.google.verify(idToken);
+    return this.login('google', profile);
   }
 
   /** 개발 전용 로그인. 컨트롤러의 DevOnlyGuard가 운영에서 막는다 */
@@ -171,7 +179,7 @@ export class AuthService {
   ): Promise<AuthIdentity> {
     const name = initialName ? normalizeName(initialName) : null;
     return this.dataSource.transaction(async (manager) => {
-      // 탈퇴 후 재가입 제한 (카카오·Apple, 새로 가입할 때만)
+      // 탈퇴 후 재가입 제한 (카카오·Apple·Google, 새로 가입할 때만)
       await this.rejoin.assertCanSignUp(manager, provider, profile.sub);
       const user = await manager.save(manager.create(User, { name }));
       const identity = await manager.save(

@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity.js';
 
-export const AUTH_PROVIDERS = ['kakao', 'apple', 'dev'] as const;
+export const AUTH_PROVIDERS = ['kakao', 'apple', 'google', 'dev'] as const;
 export type AuthProvider = (typeof AUTH_PROVIDERS)[number];
 
 /** 소셜 로그인 계정. 한 사용자에 여러 개를 연결할 수 있다 */
@@ -28,7 +28,7 @@ export class AuthIdentity {
   @Column({ type: 'varchar', length: 16 })
   provider: AuthProvider;
 
-  /** 카카오 회원번호, Apple sub */
+  /** 카카오 회원번호, Apple sub, Google sub */
   @Column({ name: 'provider_sub', type: 'varchar', length: 255 })
   providerSub: string;
 
