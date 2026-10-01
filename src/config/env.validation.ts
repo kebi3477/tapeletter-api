@@ -131,6 +131,20 @@ export class EnvironmentVariables {
   @IsBoolean()
   THROTTLE_DISABLED: boolean = false;
 
+  /** 요청 기록(request_logs)·edge 접속 로그 보관 기간(일). 지나면 정리 작업이 지운다 */
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  @Min(1)
+  @Max(3650)
+  LOG_RETENTION_DAYS: number = 30;
+
+  /** 요청 기록을 표준 출력(docker logs)에도 JSON 한 줄로 쓴다 (e2e는 false) */
+  @Transform(
+    ({ value }) => value === undefined || value === true || value === 'true',
+  )
+  @IsBoolean()
+  REQUEST_LOG_STDOUT: boolean = true;
+
   /** 정리 작업(cron) 끄기 */
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()

@@ -15,8 +15,12 @@ services:
         max-file: "5"
     environment:
       S3_BUCKET: ${S3_BUCKET:-cassette}
+      # 접속 로그 보관 일수 (Caddyfile의 roll_keep_for). api의 요청 기록과 같은 값
+      LOG_RETENTION_DAYS: ${LOG_RETENTION_DAYS:-30}
     volumes:
       - ./ops/edge/Caddyfile:/etc/caddy/Caddyfile:ro
+      # 접속 로그 (JSON, 하루 롤링). 백업 대상이 아니다. 조회: ops/logs/logs.sh edge
+      - edge-logs:/var/log/caddy
       # 소개 사이트 (루트 도메인 /)
       - ./ops/edge/site:/srv/site:ro
     networks:
@@ -35,6 +39,9 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+volumes:
+  edge-logs:
 
 networks:
   proxy:

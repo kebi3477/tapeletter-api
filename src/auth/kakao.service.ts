@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AppException } from '../common/errors/app.exception.js';
+import { socialFailure } from './auth-failure.js';
 import { SocialProfile } from './social-profile.js';
 
 const KAPI = 'https://kapi.kakao.com';
@@ -22,6 +22,16 @@ interface KakaoUser {
   };
 }
 
+/** 카카오 오류 응답의 code(예: -401)만 꺼낸다. 본문은 남기지 않는다 */
+async function kakaoErrorCode(res: Response): Promise<string> {
+  try {
+    const body = (await res.json()) as { code?: number };
+    return typeof body.code === 'number' ? ` code=${body.code}` : '';
+  } catch {
+    return '';
+  }
+}
+
 /**
  * 카카오 액세스 토큰 검증.
  * 1) access_token_info로 토큰이 살아 있는지, 우리 앱(KAKAO_APP_ID)에서 발급됐는지 확인하고
@@ -40,11 +50,15 @@ export class KakaoService {
     );
     const appId = this.config.get<string>('KAKAO_APP_ID');
     if (appId && String(info.app_id) !== appId) {
-      this.logger.warn(`다른 앱의 카카오 토큰: app_id=${info.app_id}`);
-      throw new AppException('SOCIAL_TOKEN_INVALID');
+      throw socialFailure(
+        this.logger,
+        'kakao',
+        `APP_ID_MISMATCH app_id=${info.app_id} (KAKAO_APP_ID=${appId})`,
+      );
     }
     const me = await this.call<KakaoUser>('/v2/user/me', accessToken);
-    if (me.id !== info.id) throw new AppException('SOCIAL_TOKEN_INVALID');
+    if (me.id !== info.id)
+      throw socialFailure(this.logger, 'kakao', 'USER_ID_MISMATCH');
 
     const account = me.kakao_account;
     const emailOk = account?.is_email_valid && account?.is_email_verified;
@@ -86,15 +100,27 @@ export class KakaoService {
         signal: AbortSignal.timeout(TIMEOUT_MS),
       });
     } catch (e) {
-      this.logger.error(`카카오 API 호출 실패 ${path}: ${String(e)}`);
-      throw new AppException('SOCIAL_PROVIDER_UNAVAILABLE');
+      throw socialFailure(
+        this.logger,
+        'kakao',
+        `NETWORK ${path} ${e instanceof Error ? e.name : String(e)}`,
+        'SOCIAL_PROVIDER_UNAVAILABLE',
+      );
     }
     if (res.status === 401 || res.status === 400) {
-      throw new AppException('SOCIAL_TOKEN_INVALID');
+      throw socialFailure(
+        this.logger,
+        'kakao',
+        `HTTP_${res.status} ${path}${await kakaoErrorCode(res)}`,
+      );
     }
     if (!res.ok) {
-      this.logger.error(`카카오 API 오류 ${path}: ${res.status}`);
-      throw new AppException('SOCIAL_PROVIDER_UNAVAILABLE');
+      throw socialFailure(
+        this.logger,
+        'kakao',
+        `HTTP_${res.status} ${path}${await kakaoErrorCode(res)}`,
+        'SOCIAL_PROVIDER_UNAVAILABLE',
+      );
     }
     return (await res.json()) as T;
   }

@@ -7,6 +7,7 @@ import { RejoinService } from '../auth/rejoin.service.js';
 import { BillingService } from '../billing/billing.service.js';
 import { Recording } from '../recordings/entities/recording.entity.js';
 import { ReportsService } from '../reports/reports.service.js';
+import { RequestLogsService } from '../request-logs/request-logs.service.js';
 import { ShelfService } from '../shelf/shelf.service.js';
 import { StorageService } from '../storage/storage.service.js';
 
@@ -26,6 +27,7 @@ export class JobsService {
     private readonly rejoin: RejoinService,
     private readonly storage: StorageService,
     private readonly reports: ReportsService,
+    private readonly requestLogs: RequestLogsService,
   ) {}
 
   @Cron(CronExpression.EVERY_HOUR, { name: 'hourly-cleanup' })
@@ -39,6 +41,7 @@ export class JobsService {
       ['변환 끝난 녹음 원본', () => this.cleanupReadyRaw()],
       ['5년 지난 결제 기록', () => this.billing.purgeExpiredPaymentRecords()],
       ['3년 지난 신고 기록', () => this.reports.purgeExpired()],
+      ['보관 기간 지난 요청 기록', () => this.requestLogs.purgeExpired()],
     ] as const) {
       try {
         const n = await job();

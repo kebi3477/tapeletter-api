@@ -1,5 +1,7 @@
 import { type INestApplication, RequestMethod } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { requestLogMiddleware } from './request-logs/request-log.middleware.js';
+import { RequestLogsService } from './request-logs/request-logs.service.js';
 
 export const API_PREFIX = 'api';
 
@@ -22,8 +24,10 @@ export function setupApp(app: INestApplication): INestApplication {
       { path: '.well-known/assetlinks.json', method: RequestMethod.GET },
     ],
   });
-  // Cloudflare Tunnel 뒤에서 실제 클라이언트 IP를 쓰기 위해
+  // Cloudflare Tunnel·edge Caddy 뒤에서 실제 클라이언트 IP를 쓰기 위해 (X-Forwarded-For의 마지막 값)
   (app as NestExpressApplication).set('trust proxy', 1);
+  // 요청 기록 (X-Request-Id, request_logs). 모든 라우트보다 먼저
+  app.use(requestLogMiddleware(app.get(RequestLogsService)));
   app.enableShutdownHooks();
   return app;
 }

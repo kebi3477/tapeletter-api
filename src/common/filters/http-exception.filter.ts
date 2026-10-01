@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ErrorBody } from '../errors/app.exception.js';
+import { currentRequestId } from '../utils/request-context.js';
 import { ErrorCodes } from '../errors/error-codes.js';
 
 const STATUS_TO_CODE: Partial<Record<number, keyof typeof ErrorCodes>> = {
@@ -26,10 +27,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const res = host.switchToHttp().getResponse<Response>();
     const { status, body } = this.toBody(exception);
+    // 요청 기록(request_logs)에 오류 코드와 5xx 스택을 남긴다
+    const locals = res.locals as { errorCode?: string; errorStack?: string };
+    locals.errorCode = body.code;
     if (status >= 500) {
-      this.logger.error(
-        exception instanceof Error ? exception.stack : String(exception),
-      );
+      const stack =
+        exception instanceof Error
+          ? (exception.stack ?? String(exception))
+          : String(exception);
+      locals.errorStack = stack;
+      this.logger.error(`[${currentRequestId()}] ${stack}`);
     }
     res.status(status).json(body);
   }

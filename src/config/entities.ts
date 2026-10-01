@@ -7,6 +7,7 @@ import { DeviceToken } from '../notifications/entities/device-token.entity.js';
 import { AdReward } from '../wallet/entities/ad-reward.entity.js';
 import { WithdrawnIdentity } from '../auth/entities/withdrawn-identity.entity.js';
 import { Report } from '../reports/entities/report.entity.js';
+import { RequestLog } from '../request-logs/entities/request-log.entity.js';
 import { AuthIdentity } from '../auth/entities/auth-identity.entity.js';
 import { RefreshToken } from '../auth/entities/refresh-token.entity.js';
 import { IdempotencyKey } from '../common/entities/idempotency-key.entity.js';
@@ -38,4 +39,5 @@ export const entities = [
   DeviceToken,
   WithdrawnIdentity,
   Report,
+  RequestLog,
 ];

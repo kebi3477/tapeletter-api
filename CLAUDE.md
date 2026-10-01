@@ -75,10 +75,11 @@ npm run migration:revert
 - e2e는 로컬 Redis를 실제로 쓰고(BullMQ 접두어 `cassette-e2e`), 저장소와 ffmpeg는 `test/fakes.ts`의 메모리 저장소·가짜 ffmpeg로 바꾼다. 실제 ffmpeg 테스트는 ffmpeg가 있을 때만 돈다
 - 녹음 파일은 `StorageService`(S3 호환, SeaweedFS/R2)로만 다룬다. 변환 워커는 `recordings.processor.ts`이고 API 프로세스 안에서 돈다
 - 개인정보 처리방침·이용약관·아동 안전 정책(`/privacy`, `/terms`, `/child-safety`)은 `src/policy/`에 있다. **이 저장소 코드가 실제로 수집·보관·전송하는 것만** 적는다. 저장 항목·보관 기간·외부 전송·가격·정책을 바꾸면 이 문서도 같은 커밋에서 고치고 version을 올린다. 법률 검토 전 초안이며 확인할 항목은 `docs/policy.md`
+- 로그: api는 모든 요청을 `request_logs` 표와 표준 출력에 한 줄씩 남긴다(`src/request-logs/`, 응답 헤더 `X-Request-Id`, 본문·토큰·이메일·이름·메모는 넣지 않는다). edge Caddy는 접속 로그 파일을 남긴다. 소셜 로그인 실패는 `socialFailure()`(`src/auth/auth-failure.ts`)로 사유를 남긴다. 조회는 `ops/logs/logs.sh`
 - 신고(`POST /api/reports`)는 운영자에게 로그 `warn`과 `REPORT_WEBHOOK_URL`로만 알리고 개인정보는 넣지 않는다. 운영자 조회는 `ops/reports/reports.sh`
 - 개발 전용 API(`POST /api/auth/dev`, `/api/dev/*`, `/api/dev-storage/*`)는 `DevOnlyGuard`로 운영에서 404가 된다
 - 외부 서비스(카카오, Apple, App Store, Google Play, AdMob 키, FCM)는 서비스 클래스로 감싸고 e2e에서는 `test/fakes.ts`의 가짜로 바꾼다. 키가 없으면 결제 확인은 503, 푸시는 로그만, 탈퇴 연결 해제는 건너뛴다
-- 정리 작업(`jobs/`, 매시간): 24시간 지난 멱등 키, 1시간 넘게 uploading인 녹음, consume 못 한 Play 결제, 재가입 제한 기간이 지난 탈퇴 계정 해시, 변환이 끝난 녹음의 남은 원본, 탈퇴로 연결이 끊긴 5년 지난 결제 기록과 스토어 알림 기록, 3년 지난 신고 기록. 공개 엔드포인트는 `PublicThrottlerGuard`로 요청 횟수를 제한한다(e2e는 `THROTTLE_DISABLED=true`)
+- 정리 작업(`jobs/`, 매시간): 24시간 지난 멱등 키, 1시간 넘게 uploading인 녹음, consume 못 한 Play 결제, 재가입 제한 기간이 지난 탈퇴 계정 해시, 변환이 끝난 녹음의 남은 원본, 탈퇴로 연결이 끊긴 5년 지난 결제 기록과 스토어 알림 기록, 3년 지난 신고 기록, `LOG_RETENTION_DAYS`(기본 30일) 지난 요청 기록(`request_logs`). 공개 엔드포인트는 `PublicThrottlerGuard`로 요청 횟수를 제한한다(e2e는 `THROTTLE_DISABLED=true`)
 - 전역 인증 가드가 기본이다. 로그인 없이 부르는 API는 `@Public()`을 붙인다. 보내기·구매·선물처럼 멱등이 필요한 API는 `@Idempotent()`를 붙인다
 
 ```bash

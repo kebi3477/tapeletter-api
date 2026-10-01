@@ -11,6 +11,37 @@
 }
 
 :80 {
+	# 접속 로그 (JSON, 하루 단위 롤링, LOG_RETENTION_DAYS일 지난 파일은 Caddy가 지운다). 백업 대상이 아니다.
+	# 클라이언트 IP는 request.client_ip (위 trusted_proxies로 앞단 Caddy가 넣은 X-Forwarded-For를 믿는다).
+	# Authorization·Cookie는 지우고, presigned 서명값과 링크 토큰은 가린다. 헬스체크는 남기지 않는다.
+	log_skip /api/health
+	log {
+		output file /var/log/caddy/access.log {
+			roll_interval 24h
+			roll_size 100MiB
+			roll_keep_for {$LOG_RETENTION_DAYS:30}d
+			roll_local_time
+		}
+		format filter {
+			wrap json
+			fields {
+				request>headers>Authorization delete
+				request>headers>Cookie delete
+				resp_headers>Set-Cookie delete
+				request>uri multi_regexp {
+					# presigned URL(S3) 서명·자격 증명, 개발 저장소 HMAC 서명
+					regexp "(?i)(X-Amz-(?:Signature|Credential|Security-Token)=)[^&]*" "${1}REDACTED"
+					regexp "([?&]sig=)[^&]*" "${1}REDACTED"
+					# 링크 토큰: /t/{token}, /api/share/{token} 은 앞 4자만
+					regexp "^(/t/[A-Za-z0-9_-]{4})[A-Za-z0-9_-]+" "${1}…"
+					regexp "^(/api/share/[A-Za-z0-9_-]{4})[A-Za-z0-9_-]+" "${1}…"
+					# 푸시 토큰 (DELETE /api/notifications/devices/{token})
+					regexp "^(/api/notifications/devices/[^/?]{4})[^/?]+" "${1}…"
+				}
+			}
+		}
+	}
+
 	# 녹음 파일: S3 path-style presigned URL (https://<도메인>/<버킷>/<키>?X-Amz-...)
 	# Host 헤더를 바꾸면 서명이 깨지므로 그대로 넘긴다 (reverse_proxy 기본 동작)
 	@files path /{$S3_BUCKET:cassette}/*

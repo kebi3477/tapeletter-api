@@ -26,6 +26,7 @@ import { BillingModule } from './billing/billing.module.js';
 import { JobsModule } from './jobs/jobs.module.js';
 import { PolicyModule } from './policy/policy.module.js';
 import { ReportsModule } from './reports/reports.module.js';
+import { RequestLogsModule } from './request-logs/request-logs.module.js';
 
 @Module({
   imports: [
@@ -75,6 +76,7 @@ import { ReportsModule } from './reports/reports.module.js';
     JobsModule,
     PolicyModule,
     ReportsModule,
+    RequestLogsModule,
   ],
   controllers: [AppController],
 })

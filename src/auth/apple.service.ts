@@ -7,7 +7,7 @@ import {
   type JWTVerifyGetKey,
   jwtVerify,
 } from 'jose';
-import { AppException } from '../common/errors/app.exception.js';
+import { socialFailure } from './auth-failure.js';
 import { SocialProfile } from './social-profile.js';
 
 export const APPLE_ISSUER = 'https://appleid.apple.com';
@@ -44,10 +44,7 @@ export class AppleService {
       .map((s) => s.trim())
       .filter(Boolean);
     if (audience.length === 0) {
-      this.logger.error(
-        'APPLE_CLIENT_IDS가 없어서 Apple 로그인을 받을 수 없습니다',
-      );
-      throw new AppException('SOCIAL_TOKEN_INVALID');
+      throw socialFailure(this.logger, 'apple', 'APPLE_CLIENT_IDS_MISSING');
     }
 
     let claims: AppleClaims;
@@ -67,19 +64,27 @@ export class AppleService {
         e instanceof joseErrors.JOSEError &&
         !(e instanceof joseErrors.JWKSTimeout)
       ) {
-        throw new AppException('SOCIAL_TOKEN_INVALID');
+        const claim =
+          e instanceof joseErrors.JWTClaimValidationFailed
+            ? ` claim=${e.claim}`
+            : '';
+        throw socialFailure(this.logger, 'apple', `${e.code}${claim}`);
       }
-      this.logger.error(`Apple 토큰 검증 실패: ${String(e)}`);
-      throw new AppException('SOCIAL_PROVIDER_UNAVAILABLE');
+      throw socialFailure(
+        this.logger,
+        'apple',
+        `JWKS ${e instanceof Error ? e.name : String(e)}`,
+        'SOCIAL_PROVIDER_UNAVAILABLE',
+      );
     }
 
     if (rawNonce !== undefined) {
       const hashed = createHash('sha256').update(rawNonce).digest('hex');
       if (claims.nonce !== hashed && claims.nonce !== rawNonce) {
-        throw new AppException('SOCIAL_TOKEN_INVALID');
+        throw socialFailure(this.logger, 'apple', 'NONCE_MISMATCH');
       }
     }
-    if (!claims.sub) throw new AppException('SOCIAL_TOKEN_INVALID');
+    if (!claims.sub) throw socialFailure(this.logger, 'apple', 'NO_SUB');
 
     const verified =
       claims.email_verified === true || claims.email_verified === 'true';

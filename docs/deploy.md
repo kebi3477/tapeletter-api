@@ -134,6 +134,7 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
   curl -sI https://tapeletter.lab241.com/ | head -1            # 200 (소개 사이트)
   curl -s https://tapeletter.lab241.com/api/health             # api 그대로
   ```
+- **로그 기능 배포(2026-10-01)**: api는 `up -d --build api`(마이그레이션 `RequestLogs` 자동 적용), edge는 위 `--force-recreate edge`(새 볼륨 `edge-logs`와 `LOG_RETENTION_DAYS`). pg-backup은 스크립트를 마운트해 쓰므로 재시작 필요 없음
 - 소개 사이트 파일(`ops/edge/site/` 아래)만 바뀌었으면 폴더 마운트라 `git pull`만으로 바로 반영된다.
 
 ## 3-1. 소개 사이트 (루트 도메인 `/`)
@@ -235,6 +236,12 @@ docker compose --env-file .env.production logs -f api     # "Migration ... has b
 | 변수 | 필수 | 설명 |
 |---|---|---|
 | `REPORT_WEBHOOK_URL` | 선택 | 신고가 들어오면 JSON을 POST할 웹훅(슬랙 Incoming Webhook의 `text`, 디스코드 웹훅의 `content`를 둘 다 넣는다). 신고 번호·사유·대상 유형만 보낸다. 없으면 서버 로그(`warn`)만 |
+
+### 로그
+| 변수 | 필수 | 설명 |
+|---|---|---|
+| `LOG_RETENTION_DAYS` | 선택 | 기본 `30`. api 요청 기록(`request_logs`)과 edge 접속 로그를 이 일수만큼 두고 지운다. compose가 edge에도 넘긴다(`.env.production`의 값). 처리방침 보관 기간에 이 값이 나온다 |
+| `REQUEST_LOG_STDOUT` | 선택 | 기본 `true`. 요청 기록을 docker logs에도 JSON 한 줄로 쓴다 |
 
 ### 개인정보 처리방침 · 이용약관 (`/privacy`, `/terms`)
 비어 있으면 페이지에 "준비 중"으로 표시하고, 운영에서는 시작할 때 경고 로그만 남긴다(서버는 뜬다). 문서 내용과 사용자 확인이 필요한 항목은 `docs/policy.md`.
@@ -359,6 +366,31 @@ ops/reports/reports.sh set <신고 id> reviewed    # 상태: received → review
 - 테이프 내용 확인이 필요하면 `show`의 `tape_file_key`로 저장소에서 파일을 찾는다. 신고 기록에는 녹음 파일을 복사하지 않는다.
 - 조치(계정 삭제 등)는 아직 도구가 없다. 필요하면 DB에서 직접 처리하고, 처리한 뒤 상태를 `actioned`로 바꾼다.
 - 신고 기록은 3년 보관하고 매시간 정리 작업이 지운다. 신고자가 탈퇴하면 신고자만 비워 둔다(`신고자` 칸이 `(탈퇴)`).
+
+## 8-1. 로그 조회
+
+| 어디 | 무엇 | 보관 · 삭제 |
+|---|---|---|
+| api `request_logs` 표 | 요청 한 줄: 시각, 요청 ID(`X-Request-Id`), method, 경로(쿼리 없음, 토큰 앞 4자·UUID 앞 8자), 상태, ms, 사용자 ID, IP, 앱 버전·플랫폼(`X-App-Version`·`X-App-Platform`), User-Agent, 오류 코드, detail(소셜 로그인 실패 사유·외부 응답 코드, 5xx 스택) | `LOG_RETENTION_DAYS`(30일) 지나면 매시간 정리 작업이 삭제. pg_dump 백업에서는 데이터 제외 |
+| api 표준 출력 (`dc logs api`) | 위와 같은 줄을 JSON(`"type":"request"`)으로, 그 밖에 Nest 로그(소셜 로그인 실패 `warn`, 5xx 스택 `error`) | docker json-file 10MB × 5개 |
+| edge 접속 로그 (`edge-logs` 볼륨 `/var/log/caddy/access*.log`) | 모든 요청(헬스체크 제외). Caddy JSON: `ts`, `request.client_ip`(앞단 Caddy의 X-Forwarded-For), method, uri, `User-Agent`, status, duration | 하루마다 새 파일(지난 파일은 gzip), `LOG_RETENTION_DAYS`일 지나면 Caddy가 삭제. 백업 대상 아님 |
+
+가리는 값: Authorization·Cookie·Set-Cookie 헤더는 지운다. edge uri의 `X-Amz-Signature`·`X-Amz-Credential`·`X-Amz-Security-Token`·`sig`는 `REDACTED`, `/t/{token}`·`/api/share/{token}`·`/api/notifications/devices/{token}`은 앞 4자만. api 기록에는 쿼리스트링과 요청·응답 본문을 넣지 않는다.
+
+```bash
+cd ~/projects/tapeletter-api
+ops/logs/logs.sh api                      # 최근 60분 api 요청 50줄
+ops/logs/logs.sh api -a -m 1440 -v        # 하루 동안 소셜 로그인 실패 (provider·사유 전체)
+ops/logs/logs.sh api -r <X-Request-Id>    # 요청 하나
+ops/logs/logs.sh api -u <사용자 UUID> -m 720
+ops/logs/logs.sh api -s 5xx -v            # 서버 오류와 스택
+ops/logs/logs.sh api -p /api/auth -s 4xx
+ops/logs/logs.sh edge -m 30 -s 4xx        # edge 접속 로그 (jq 필요: sudo apt install jq)
+ops/logs/logs.sh edge -i 203.0.113.7 -m 1440
+```
+
+- 소셜 로그인 실패 사유 예: `kakao 로그인 실패(SOCIAL_TOKEN_INVALID): HTTP_401 /v1/user/access_token_info code=-401`, `kakao ...: APP_ID_MISMATCH app_id=…`, `google ...: AUD_MISMATCH`·`EXPIRED`·`ISS_MISMATCH`·`UNKNOWN_KID`, `google ...(SOCIAL_PROVIDER_UNAVAILABLE): GOOGLE_CLIENT_IDS_MISSING`, `apple ...: ERR_JWT_CLAIM_VALIDATION_FAILED claim=aud`·`NONCE_MISMATCH`
+- 사용자가 "로그인이 안 된다"고 하면: 시각을 듣고 `logs.sh api -a -m <분>`, 요청이 아예 없으면 `logs.sh edge -p /api/auth`로 edge까지 왔는지 본다
 
 ## 9. 자주 쓰는 명령
 

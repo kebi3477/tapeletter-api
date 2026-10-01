@@ -1,13 +1,29 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Certificates, OAuth2Client } from 'google-auth-library';
-import { AppException } from '../common/errors/app.exception.js';
+import { socialFailure } from './auth-failure.js';
 import { SocialProfile } from './social-profile.js';
 
 export const GOOGLE_ISSUERS = [
   'accounts.google.com',
   'https://accounts.google.com',
 ];
+
+/**
+ * google-auth-library 오류 메시지를 짧은 사유 코드로 바꾼다.
+ * 메시지에 토큰 내용(JSON)이 붙을 수 있어 원문 대신 코드만 남긴다.
+ */
+export function googleReason(e: unknown): string {
+  const m = e instanceof Error ? e.message : String(e);
+  if (/No pem found/i.test(m)) return 'UNKNOWN_KID';
+  if (/audience|recipient/i.test(m)) return 'AUD_MISMATCH';
+  if (/issuer/i.test(m)) return 'ISS_MISMATCH';
+  if (/too late|expired/i.test(m)) return 'EXPIRED';
+  if (/too early/i.test(m)) return 'NOT_YET_VALID';
+  if (/signature/i.test(m)) return 'BAD_SIGNATURE';
+  if (/envelope|segments|parse|token/i.test(m)) return 'MALFORMED';
+  return 'INVALID';
+}
 
 /**
  * Google ID 토큰 검증 (Android의 Google 로그인. 서버는 플랫폼을 가리지 않는다).
@@ -36,18 +52,24 @@ export class GoogleService {
   async verify(idToken: string): Promise<SocialProfile> {
     const audience = this.audience();
     if (audience.length === 0) {
-      this.logger.error(
-        'GOOGLE_CLIENT_IDS가 없어서 Google 로그인을 받을 수 없습니다',
+      throw socialFailure(
+        this.logger,
+        'google',
+        'GOOGLE_CLIENT_IDS_MISSING',
+        'SOCIAL_PROVIDER_UNAVAILABLE',
       );
-      throw new AppException('SOCIAL_PROVIDER_UNAVAILABLE');
     }
 
     let certs: Certificates;
     try {
       certs = await this.certs();
     } catch (e) {
-      this.logger.error(`Google 인증서를 받지 못했습니다: ${String(e)}`);
-      throw new AppException('SOCIAL_PROVIDER_UNAVAILABLE');
+      throw socialFailure(
+        this.logger,
+        'google',
+        `CERTS_FETCH ${e instanceof Error ? e.message.slice(0, 120) : String(e)}`,
+        'SOCIAL_PROVIDER_UNAVAILABLE',
+      );
     }
 
     let payload;
@@ -59,10 +81,10 @@ export class GoogleService {
         GOOGLE_ISSUERS,
       );
       payload = ticket.getPayload();
-    } catch {
-      throw new AppException('SOCIAL_TOKEN_INVALID');
+    } catch (e) {
+      throw socialFailure(this.logger, 'google', googleReason(e));
     }
-    if (!payload?.sub) throw new AppException('SOCIAL_TOKEN_INVALID');
+    if (!payload?.sub) throw socialFailure(this.logger, 'google', 'NO_SUB');
 
     return {
       sub: payload.sub,

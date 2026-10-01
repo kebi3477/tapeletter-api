@@ -18,18 +18,23 @@ import { OperatorInfo, PENDING, PolicyDocument } from './types.js';
  * - 푸시: notifications/entities/device-token.entity.ts · 탈퇴 해시: auth/entities/withdrawn-identity.entity.ts
  * - 기간: JWT_REFRESH_TTL 60일, 멱등 키 24시간·방치 업로드 1시간(jobs/), 링크 7일(SHARE_LINK_TTL_MS),
  *   재가입 제한 30일(REJOIN_COOLDOWN_DAYS), 로그 10MB×5(docker-compose), DB 백업 14개(PG_BACKUP_KEEP)
+ * - 서비스 이용 기록: request-logs/ (request_logs 표, 경로 마스킹 mask-path.ts, LOG_RETENTION_DAYS 지나면 jobs/ 정리, pg_dump에서 제외),
+ *   edge 접속 로그 ops/edge/Caddyfile (JSON 파일, 하루 롤링, LOG_RETENTION_DAYS일 보관, 서명값·토큰 가림). myhandball Caddy는 접속 로그 없음
  * - 외부 전송: auth/kakao.service.ts, auth/apple.service.ts, auth/apple-sign-in.service.ts, auth/google.service.ts(공개 인증서 조회만),
  *   notifications/fcm.service.ts, billing/app-store.service.ts, billing/google-play.service.ts, billing/admob.service.ts
  * 저장 항목·보관 기간·외부 전송이 바뀌면 이 문서를 함께 고치고 version을 올린다.
  */
-export function privacyPolicy(op: OperatorInfo): PolicyDocument {
+export function privacyPolicy(
+  op: OperatorInfo,
+  logRetentionDays = 30,
+): PolicyDocument {
   // 상호가 아직 없으면 본문 문장에는 "테이프레터 운영자"라고 쓰고, 표에는 "준비 중"으로 보여 준다
   const operator =
     op.operatorName === PENDING ? '테이프레터 운영자' : op.operatorName;
   return {
     kind: 'privacy',
     title: '개인정보 처리방침',
-    version: '1.6',
+    version: '1.7',
     effectiveDate: op.effectiveDate,
     intro: [
       `${operator}(이하 '운영자')는 목소리를 테이프에 녹음해 보내는 앱 tapeletter(테이프레터)와 링크 웹 페이지(이하 '서비스')를 운영하면서, 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고 관련 고충을 빠르게 처리하기 위해 이 처리방침을 둡니다.`,
@@ -50,6 +55,7 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
           '알림: 테이프 도착, 링크 테이프 받음, 크레딧 선물 알림을 보냅니다.',
           '부정 이용 방지: 같은 요청이 두 번 처리되지 않게 하고, 요청 횟수를 제한하며, 탈퇴 후 30일 동안 같은 계정의 재가입을 제한합니다.',
           '신고 처리: 테이프나 사람에 대한 신고를 받아 확인하고 조치합니다.',
+          '장애 대응, 부정 이용 방지, 보안: 서비스 이용 기록(접속 로그)으로 오류와 로그인 실패 원인을 찾고, 비정상적인 이용을 확인합니다.',
         ],
       },
       {
@@ -134,7 +140,12 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
             [
               '자동 생성 정보',
               '같은 요청의 중복 처리를 막기 위한 요청 기록(요청 내용의 해시와 응답), 서버 오류 기록, 요청 횟수 제한을 위한 접속 IP 주소',
-              '이용 중 자동 생성. 접속 IP 주소는 서버 메모리에서 1분 동안만 세고 저장하지 않습니다.',
+              '이용 중 자동 생성. 요청 횟수 제한은 서버 메모리에서 1분 동안만 셉니다(접속 IP 주소는 아래 서비스 이용 기록에 남습니다).',
+            ],
+            [
+              '서비스 이용 기록(접속 로그)',
+              'IP 주소, 접속 시각, 요청 경로(링크 주소·알림 토큰 등은 앞 몇 글자만)와 결과(응답 상태, 오류 코드, 처리 시간), 요청 번호, 회원 식별 번호(로그인한 경우), 기기·앱 정보(앱 버전, 플랫폼, 브라우저·앱 종류), 로그인 실패 사유와 서버 오류 내용',
+              '서비스를 이용할 때 서버와 서버 앞단(리버스 프록시)이 자동으로 남김. 요청·응답 내용(녹음, 이름, 메모 등), 로그인 토큰, 이메일, 파일 주소의 서명값은 남기지 않습니다.',
             ],
           ],
         },
@@ -194,8 +205,12 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
               '30일(재가입 제한 기간). 기간이 지나면 매시간 도는 정리 작업이 삭제합니다.',
             ],
             [
-              '서버 로그',
-              '서비스마다 10MB씩 최대 5개 파일까지 두고, 넘으면 오래된 것부터 지웁니다. 서버 앞단의 리버스 프록시는 접속 로그를 남기지 않습니다.',
+              '서비스 이용 기록(접속 로그)',
+              `${logRetentionDays}일. 기간이 지나면 매시간 도는 정리 작업과 리버스 프록시가 자동으로 삭제합니다. 탈퇴해도 이 기간 동안은 남으며, 데이터베이스 백업에는 넣지 않습니다.`,
+            ],
+            [
+              '서버 실행 기록',
+              '서비스마다 10MB씩 최대 5개 파일까지 두고, 넘으면 오래된 것부터 지웁니다(위 서비스 이용 기록 한 줄도 함께 남습니다). 가장 앞단의 리버스 프록시(같은 서버의 다른 서비스와 함께 쓰는 입구)는 접속 로그를 남기지 않습니다.',
             ],
             [
               '데이터베이스 백업',
@@ -339,6 +354,10 @@ export function privacyPolicy(op: OperatorInfo): PolicyDocument {
       },
     ],
     history: [
+      {
+        version: '1.7',
+        summary: `서비스 이용 기록(접속 로그) 추가: 항목(IP 주소, 접속 시각, 요청 경로와 결과, 기기·앱 정보 등), 목적(장애 대응, 부정 이용 방지, 보안), 보관 ${logRetentionDays}일`,
+      },
       {
         version: '1.6',
         summary:

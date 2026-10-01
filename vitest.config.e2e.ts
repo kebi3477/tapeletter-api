@@ -31,6 +31,7 @@ export default defineConfig({
       THROTTLE_DISABLED: process.env.THROTTLE_DISABLED ?? 'true',
       JOBS_DISABLED: 'true',
       REPORT_WEBHOOK_URL: 'https://hooks.test/report',
+      REQUEST_LOG_STDOUT: 'false',
       PUBLIC_BASE_URL: 'https://tapeletter.test',
       APP_STORE_URL_IOS: 'https://apps.apple.com/app/id1',
       APP_STORE_URL_ANDROID:

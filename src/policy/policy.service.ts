@@ -47,7 +47,10 @@ export class PolicyService implements OnModuleInit {
   }
 
   privacy(): PolicyDocument {
-    return privacyPolicy(this.operator());
+    return privacyPolicy(
+      this.operator(),
+      this.config.get<number>('LOG_RETENTION_DAYS') ?? 30,
+    );
   }
 
   terms(): PolicyDocument {

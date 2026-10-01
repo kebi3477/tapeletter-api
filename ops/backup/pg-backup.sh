@@ -9,7 +9,8 @@ TS=$(date -u +%Y%m%dT%H%M%SZ)
 FILE="$DIR/${PGDATABASE}-${TS}.dump"
 
 echo "[pg-backup] 시작 $FILE"
-pg_dump --format=custom --compress=6 --no-owner --file="$FILE.part"
+# 요청 기록(request_logs)은 보관 기간(LOG_RETENTION_DAYS)을 넘겨 남지 않게 데이터를 백업하지 않는다 (표 구조만)
+pg_dump --format=custom --compress=6 --no-owner --exclude-table-data=request_logs --file="$FILE.part"
 mv "$FILE.part" "$FILE"
 echo "[pg-backup] 완료 $(du -h "$FILE" | cut -f1)"
 

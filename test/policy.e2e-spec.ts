@@ -69,7 +69,12 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
 
   it('정책 결정 1.1 반영: 버전·개정 이력, 만 14세, 청약철회, 유효기간, 종료 30일, 원본 삭제, AdMob, 고지 기간', async () => {
     const privacy = (await request(app.getHttpServer()).get('/privacy')).text;
-    expect(privacy).toContain('버전 1.6');
+    expect(privacy).toContain('버전 1.7');
+    expect(privacy).toContain('서비스 이용 기록(접속 로그)');
+    expect(privacy).toContain(
+      '30일. 기간이 지나면 매시간 도는 정리 작업과 리버스 프록시가 자동으로 삭제합니다',
+    );
+    expect(privacy).toContain('장애 대응, 부정 이용 방지, 보안');
     expect(privacy).toContain('Google LLC (Google 로그인)');
     expect(privacy).toContain(
       'Google 계정 식별자, 이메일(Google이 확인한 경우만)',
@@ -86,7 +91,9 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
     );
     expect(privacy).toContain('Google LLC (AdMob)');
     expect(privacy).toContain('iOS 광고 식별자(IDFA)를 쓰지 않으며');
-    expect(privacy).toContain('리버스 프록시는 접속 로그를 남기지 않습니다');
+    expect(privacy).toContain(
+      '가장 앞단의 리버스 프록시(같은 서버의 다른 서비스와 함께 쓰는 입구)는 접속 로그를 남기지 않습니다',
+    );
     expect(privacy).toContain('시행 7일 전');
     expect(privacy).not.toContain(
       '연동할 때 보내는 항목을 이 방침에 추가합니다',

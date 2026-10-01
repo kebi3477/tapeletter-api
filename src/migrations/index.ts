@@ -6,6 +6,7 @@ import { RecordingRawDeletedAt1790350165877 } from './1790350165877-RecordingRaw
 import { Reports1790402274413 } from './1790402274413-Reports.js';
 import { FriendNickname1790403770039 } from './1790403770039-FriendNickname.js';
 import { TapeTypeSeconds1790438049000 } from './1790438049000-TapeTypeSeconds.js';
+import { RequestLogs1790839694535 } from './1790839694535-RequestLogs.js';
 import { DeliveryMemo1790734522471 } from './1790734522471-DeliveryMemo.js';
 
 /**
@@ -22,4 +23,5 @@ export const migrations = [
   FriendNickname1790403770039,
   TapeTypeSeconds1790438049000,
   DeliveryMemo1790734522471,
+  RequestLogs1790839694535,
 ];

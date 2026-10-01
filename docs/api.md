@@ -56,6 +56,8 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | ID | 모두 UUID 문자열 |
 | 테이프 종류 | `tapeType`: 정수 `15` · `60` · `180` = **녹음 한도(초)**. 15초(무료·무제한) · 1분 · 3분(구매해서 보낼 때 1개씩 차감). 옛 코드 `1`·`3`·`5`는 받지 않는다(`400 VALIDATION_FAILED`) |
 | 인증 | `Authorization: Bearer <accessToken>`. `@공개`라고 적힌 API만 없어도 된다 |
+| 요청 ID | 모든 응답에 `X-Request-Id` 헤더가 붙는다(요청에 `X-Request-Id`를 8~64자 `[A-Za-z0-9._-]`로 보내면 그 값을 쓴다). 오류를 보고하거나 문의할 때 이 값을 함께 남기면 서버 기록(`ops/logs/logs.sh api -r <ID>`)을 바로 찾는다 |
+| 앱 정보 헤더(권장) | `X-App-Version: 1.2.3`, `X-App-Platform: ios` 또는 `android`. 서버 요청 기록에만 쓰고 동작은 바꾸지 않는다 |
 | 멱등 | 보내기·구매·선물·결제 확인은 `Idempotency-Key` 헤더가 **필수**다 (아래) |
 | 빈 응답 | 돌려줄 게 없으면 `204 No Content` |
 | 목록 | `{ "items": [...] }`. 페이지가 있으면 `{ "items": [...], "nextCursor": "..." \| null }`, 요청은 `?cursor=&limit=` (limit 기본 30, 최대 100) |
@@ -1064,6 +1066,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-01 | 요청 기록: 모든 응답에 `X-Request-Id` 헤더, 앱 정보 헤더 `X-App-Version`·`X-App-Platform`(권장, 기록에만 씀). 응답 본문 변경 없음. 개인정보 처리방침 1.7 |
 | 2026-10-01 | **서랍 용량 규칙 변경**: 서랍 보관량 `stored`(`GET /shelf`, `Me.drawer`) = **뜯은 테이프 수**(안 뜯은 소포는 세지 않음). 받기는 늘 되고, 꽉 차면 `POST /deliveries/{id}/open`이 `409 DRAWER_FULL`(이미 뜯은 건 200). 한 칸 최대 10개: 그룹 응답에 `cap: 10`, `PATCH /shelf/items/{id}`로 다른 곳에서 넣을 때 `409 GROUP_FULL`. 오류 코드 `DRAWER_FULL`·`GROUP_FULL` 추가. `stats.receivedCount`는 안 뜯은 소포 포함(값 그대로). 서랍이 꽉 찬 사람에게 가는 테이프 도착 푸시 본문 변경. 이용약관 1.6 |
 | 2026-10-01 | Google 로그인 `POST /auth/google { idToken }` 추가(응답 `AuthResponse`, 오류 `SOCIAL_TOKEN_INVALID`·`SOCIAL_PROVIDER_UNAVAILABLE`·`REJOIN_RESTRICTED` 그대로). `Me.providers`에 `google`. `suggestedName`에 Google 이름. 환경 변수 `GOOGLE_CLIENT_IDS`. 개인정보 처리방침 1.6·이용약관 1.5 |
 | 2026-09-30 | 루트 `/`에 소개 사이트(정적, edge Caddy가 서빙). API 변경 없음 |
