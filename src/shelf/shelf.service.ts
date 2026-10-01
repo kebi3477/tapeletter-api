@@ -29,6 +29,9 @@ import { keyBetween, keysBetween } from './position.js';
 
 export const DEFAULT_GROUP_NAME = '새 칸';
 
+/** 한 칸에 넣을 수 있는 테이프 수. 분류 안 함은 칸이 아니라 제한이 없다 */
+export const GROUP_CAPACITY = 10;
+
 export function normalizeGroupName(raw: string | undefined): string {
   const name = (raw ?? '').normalize('NFC').trim();
   if (!name) return DEFAULT_GROUP_NAME;
@@ -51,15 +54,31 @@ export class ShelfService {
     private readonly storage: StorageService,
   ) {}
 
-  /** 보관량(분류 안 함 + 모든 칸)과 안 뜯은 소포 수 */
-  async counts(userId: string): Promise<{ stored: number; unopened: number }> {
+  /**
+   * 서랍 수치. stored = 뜯은 테이프 수(서랍 보관량, cap과 비교), total = 안 뜯은 소포까지 받은 테이프 전체,
+   * unopened = 안 뜯은 소포 수
+   */
+  async counts(
+    userId: string,
+  ): Promise<{ stored: number; total: number; unopened: number }> {
     const row = await this.dataSource.manager
       .createQueryBuilder(Delivery, 'd')
-      .select('COUNT(*)::int', 'stored')
+      .select('COUNT(*)::int', 'total')
       .addSelect('COUNT(*) FILTER (WHERE d.opened_at IS NULL)::int', 'unopened')
       .where(VISIBLE, { userId })
-      .getRawOne<{ stored: number; unopened: number }>();
-    return { stored: row?.stored ?? 0, unopened: row?.unopened ?? 0 };
+      .getRawOne<{ total: number; unopened: number }>();
+    const total = row?.total ?? 0;
+    const unopened = row?.unopened ?? 0;
+    return { stored: total - unopened, total, unopened };
+  }
+
+  /** 서랍 보관량 = 뜯은 테이프 수. 뜯기(open) 판정에 쓴다 */
+  async openedCount(m: EntityManager, userId: string): Promise<number> {
+    return m
+      .createQueryBuilder(Delivery, 'd')
+      .where(VISIBLE, { userId })
+      .andWhere('d.opened_at IS NOT NULL')
+      .getCount();
   }
 
   async getShelf(userId: string): Promise<ShelfResponse> {
@@ -79,15 +98,17 @@ export class ShelfService {
       byGroup.set(d.groupId, list);
     }
     const unsorted = byGroup.get(null) ?? [];
+    const stored = items.filter((d) => d.openedAt !== null).length;
     return {
-      stored: items.length,
+      stored,
       cap: user.drawerCap,
-      full: items.length >= user.drawerCap,
+      full: stored >= user.drawerCap,
       unopenedCount: unsorted.filter((d) => d.openedAt === null).length,
       unsorted: unsorted.map(toShelfItem),
       groups: groups.map((g) => ({
         id: g.id,
         name: g.name,
+        cap: GROUP_CAPACITY,
         items: (byGroup.get(g.id) ?? []).map(toShelfItem),
       })),
     };
@@ -142,7 +163,7 @@ export class ShelfService {
           position: keyBetween(last?.position ?? null, null),
         }),
       );
-      return { id: group.id, name: group.name, items: [] };
+      return { id: group.id, name: group.name, cap: GROUP_CAPACITY, items: [] };
     });
   }
 
@@ -202,8 +223,18 @@ export class ShelfService {
         .getOne();
       if (!item) throw new AppException('TAPE_NOT_FOUND');
       if (dto.groupId) {
-        await this.findGroup(m, userId, dto.groupId, false);
+        // 칸 줄을 잠가 같은 칸으로 동시에 옮기는 요청을 한 줄로 세운다 (10번째 자리 경쟁)
+        await this.findGroup(m, userId, dto.groupId, true);
         if (!item.openedAt) throw new AppException('TAPE_NOT_OPENED');
+        if (item.groupId !== dto.groupId) {
+          const inGroup = await m
+            .createQueryBuilder(Delivery, 'd')
+            .where(VISIBLE, { userId })
+            .andWhere('d.group_id = :groupId', { groupId: dto.groupId })
+            .getCount();
+          // 이미 10개를 넘은 칸은 그대로 두고 더 넣는 것만 막는다
+          if (inGroup >= GROUP_CAPACITY) throw new AppException('GROUP_FULL');
+        }
       }
 
       let before: string | null = null;

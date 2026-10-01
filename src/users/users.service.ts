@@ -63,9 +63,10 @@ export class UsersService {
       ]);
     const qty = (t: PaidTapeType) =>
       stock.find((s) => s.tapeType === t)?.qty ?? 0;
-    const { stored, unopened } = drawer;
-    // 받은 테이프 수 = 지금 서랍에 있는 테이프 수 (디자인과 같음)
-    const receivedCount = stored;
+    const { stored, total, unopened } = drawer;
+    // 받은 테이프 수 = 지금 서랍에 있는 테이프 수(안 뜯은 소포 포함, 디자인과 같음).
+    // drawer.stored는 서랍 보관량 = 뜯은 테이프 수
+    const receivedCount = total;
 
     return {
       id: user.id,

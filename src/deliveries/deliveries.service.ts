@@ -170,15 +170,25 @@ export class DeliveriesService {
 
     const { delivery, sender, recording, suppressed } = result;
     if (delivery.recipientId && !suppressed) {
-      this.notify(() =>
-        this.notifications.tapeDelivered({
+      const recipientId = delivery.recipientId;
+      this.notify(async () => {
+        // 받는 사람 서랍이 꽉 찼으면(뜯은 수 >= cap) 알림 본문으로 알려 준다
+        const [counts, recipient] = await Promise.all([
+          this.shelf.counts(recipientId),
+          this.dataSource.manager.findOne(User, {
+            where: { id: recipientId },
+            select: { id: true, drawerCap: true },
+          }),
+        ]);
+        await this.notifications.tapeDelivered({
           deliveryId: delivery.id,
-          recipientId: delivery.recipientId!,
+          recipientId,
           senderId,
           senderName: sender.name ?? UNNAMED,
           tapeType: recording.tapeType,
-        }),
-      );
+          drawerFull: !!recipient && counts.stored >= recipient.drawerCap,
+        });
+      });
     }
     return this.getSent(senderId, delivery.id);
   }
@@ -245,15 +255,36 @@ export class DeliveriesService {
     return toShelfItem(await this.findReceived(userId, id));
   }
 
-  /** 소포 뜯기. 처음 한 번만 openedAt을 채운다 */
+  /**
+   * 소포 뜯기. 처음 한 번만 openedAt을 채운다. 이미 뜯은 테이프는 그대로 돌려준다.
+   * 서랍 보관량(뜯은 테이프 수)이 cap 이상이면 409 DRAWER_FULL (받기는 늘 되고, 뜯기만 막는다).
+   * 사용자 줄을 잠가 같은 사람의 동시 뜯기가 cap을 넘지 않게 한다.
+   */
   async open(userId: string, id: string): Promise<ShelfItem> {
-    await this.findReceived(userId, id);
-    await this.dataSource
-      .createQueryBuilder()
-      .update(Delivery)
-      .set({ openedAt: () => 'COALESCE(opened_at, now())' })
-      .where('id = :id', { id })
-      .execute();
+    const d = await this.findReceived(userId, id);
+    if (!d.openedAt) {
+      await this.dataSource.transaction(async (m) => {
+        const user = await m
+          .createQueryBuilder(User, 'u')
+          .setLock('pessimistic_write')
+          .where('u.id = :userId', { userId })
+          .getOne();
+        if (!user) throw new AppException('USER_NOT_FOUND');
+        const row = await m.findOne(Delivery, {
+          where: { id },
+          select: { id: true, openedAt: true },
+        });
+        if (row?.openedAt) return; // 다른 요청이 먼저 뜯었다
+        const opened = await this.shelf.openedCount(m, userId);
+        if (opened >= user.drawerCap) throw new AppException('DRAWER_FULL');
+        await m
+          .createQueryBuilder()
+          .update(Delivery)
+          .set({ openedAt: () => 'COALESCE(opened_at, now())' })
+          .where('id = :id', { id })
+          .execute();
+      });
+    }
     return this.getReceived(userId, id);
   }
 

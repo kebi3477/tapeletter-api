@@ -93,7 +93,9 @@ describe('정책 페이지 /privacy · /terms (e2e, 운영자 정보 없음)', (
     );
 
     const terms = (await request(app.getHttpServer()).get('/terms')).text;
-    expect(terms).toContain('버전 1.5');
+    expect(terms).toContain('버전 1.6');
+    expect(terms).toContain('한 칸에는 테이프를 10개까지 넣을 수 있습니다');
+    expect(terms).toContain('새 소포를 뜯을 수 없습니다');
     expect(terms).toContain(
       '15초 테이프는 무료로 제한 없이 쓸 수 있고, 1분·3분 테이프는',
     );

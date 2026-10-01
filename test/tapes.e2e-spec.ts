@@ -192,7 +192,8 @@ describe('보내기 · 서랍 · 링크 · 친구 테이프 · 탈퇴 (e2e)', ()
         stored: s.stored,
         unopenedCount: s.unopenedCount,
       });
-      expect(bMe.stats.receivedCount).toBe(s.stored);
+      // 받은 테이프 수는 안 뜯은 소포까지, drawer.stored는 뜯은 테이프만
+      expect(bMe.stats.receivedCount).toBe(s.stored + s.unopenedCount);
 
       const early = await request(server())
         .get(`/api/deliveries/${id}/audio`)
@@ -470,7 +471,7 @@ describe('보내기 · 서랍 · 링크 · 친구 테이프 · 탈퇴 (e2e)', ()
         .expect(404);
     });
 
-    it('서랍이 꽉 차도 받는다 (full 표시)', async () => {
+    it('서랍이 꽉 차도 받는다 (보관량은 뜯은 테이프만)', async () => {
       const a = await devLogin(app, '보냄3');
       const b = await devLogin(app, '꽉참');
       await befriend(app, a, b);
@@ -483,9 +484,9 @@ describe('보내기 · 서랍 · 링크 · 친구 테이프 · 탈퇴 (e2e)', ()
       }
       const s = await shelf(b);
       expect(s).toMatchObject({
-        stored: 2,
+        stored: 0,
         cap: 1,
-        full: true,
+        full: false,
         unopenedCount: 2,
       });
     });

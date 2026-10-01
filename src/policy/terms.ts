@@ -14,7 +14,7 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
   return {
     kind: 'terms',
     title: '이용약관',
-    version: '1.5',
+    version: '1.6',
     effectiveDate: op.effectiveDate,
     intro: [
       `이 약관은 ${operator}(이하 '운영자')가 제공하는 tapeletter(테이프레터) 앱과 웹 페이지(이하 '서비스')를 이용하는 조건과 절차, 운영자와 이용자의 권리·의무를 정합니다.`,
@@ -55,7 +55,8 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
         items: [
           '회원은 15초·1분·3분 테이프에 목소리를 녹음해 친구에게 보내거나, 링크로 새 친구에게 보낼 수 있습니다.',
           '15초 테이프는 무료로 제한 없이 쓸 수 있고, 1분·3분 테이프는 상점에서 크레딧으로 사서 보낼 때마다 1개씩 씁니다.',
-          '받은 테이프는 소포를 뜯어야 들을 수 있고, 서랍에 칸을 만들어 정리할 수 있습니다. 서랍은 기본 12개를 보관하며, 꽉 차도 새 테이프는 받을 수 있습니다.',
+          '받은 테이프는 소포를 뜯어야 들을 수 있고, 서랍에 칸을 만들어 정리할 수 있습니다. 한 칸에는 테이프를 10개까지 넣을 수 있습니다.',
+          '서랍은 뜯은 테이프를 기본 12개까지 보관합니다. 서랍이 꽉 차도 새 테이프는 받을 수 있지만, 테이프를 지우거나 서랍을 넓히기 전에는 새 소포를 뜯을 수 없습니다.',
           '테이프는 받는 사람만 들을 수 있습니다. 보낸 사람은 보낸 뒤에 다시 들을 수 없고, 받았는지·들었는지만 확인할 수 있습니다.',
           '녹음은 서버에서 테이프 소리로 바뀌어 전달됩니다.',
         ],
@@ -191,6 +192,11 @@ export function termsOfService(op: OperatorInfo): PolicyDocument {
       },
     ],
     history: [
+      {
+        version: '1.6',
+        summary:
+          '서랍 보관량은 뜯은 테이프 수, 서랍이 꽉 차면 새 소포를 받되 뜯기는 제한, 한 칸에 10개까지',
+      },
       {
         version: '1.5',
         summary: 'Google 계정으로 가입·로그인 추가',

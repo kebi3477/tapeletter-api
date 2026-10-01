@@ -23,7 +23,7 @@ describe('개발 시드 POST /dev/seed (e2e)', () => {
         .expect(200);
       expect(seeded.body).toEqual({
         friends: 6,
-        stored: 10,
+        stored: 8,
         groups: 3,
         sent: 4,
         credits: 120,
@@ -35,7 +35,7 @@ describe('개발 시드 POST /dev/seed (e2e)', () => {
       expect(my).toMatchObject({
         name: '민경',
         credits: 120,
-        drawer: { stored: 10, cap: 12, full: false, unopenedCount: 2 },
+        drawer: { stored: 8, cap: 12, full: false, unopenedCount: 2 },
         tapes: [
           { tapeType: 15, qty: null },
           { tapeType: 60, qty: 2 },

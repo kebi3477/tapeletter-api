@@ -100,7 +100,7 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
   "id": "d3d62aa5-39ec-41ac-b771-f642d4ac4b87",
   "name": "민경",
   "credits": 120,
-  "drawer": { "stored": 11, "cap": 12, "full": false, "unopenedCount": 1 },
+  "drawer": { "stored": 10, "cap": 12, "full": false, "unopenedCount": 1 },
   "tapes": [
     { "tapeType": 15, "qty": null },
     { "tapeType": 60, "qty": 2 },
@@ -115,11 +115,11 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | 필드 | 설명 |
 |---|---|
 | `name` | 친구에게 보이는 이름, 최대 8자. 가입 직후 `null` |
-| `drawer.stored` | 보관 중인 테이프 수(분류 안 함 + 모든 칸) |
-| `drawer.full` | `stored >= cap`. 서랍 꽉 참 배너(`fullOn`) |
+| `drawer.stored` | **서랍 보관량 = 뜯은 테이프 수**(분류 안 함 + 모든 칸). 안 뜯은 소포는 세지 않는다 |
+| `drawer.full` | `stored >= cap`. 꽉 차면 새 테이프는 받지만 **뜯을 수 없다**(`POST /deliveries/{id}/open` → `409 DRAWER_FULL`). 서랍 꽉 참 배너(`fullOn`) |
 | `drawer.unopenedCount` | "분류 안 함"의 안 뜯은 소포 수. 탭바 서랍 레드 점(`hasNew`) — 앱은 탭바 때문에 이 API를 자주 불러도 된다 |
 | `tapes` | 보유 테이프. 항상 15·60·180 순서 3개. 15초는 무제한이라 `qty: null`("무료") |
-| `stats.receivedCount` | 받은 테이프 수 = 보관량 (디자인과 같음) |
+| `stats.receivedCount` | 받은 테이프 수 = 지금 서랍에 있는 테이프 전체(안 뜯은 소포 포함). `drawer.stored + 안 뜯은 소포 수` |
 | `stats.sentCount` | 보낸 테이프 수 (링크로 보낸 것 포함) |
 | `stats.friendCount` | 친구 수 (차단한 사람 제외) |
 | `providers` | 연결된 계정 (`kakao` · `apple` · `google` · `dev`) — 설정 > 연결된 계정 |
@@ -268,6 +268,8 @@ S3 저장소·ffmpeg 없이 맥 한 대로 전체 흐름(녹음 업로드 → �
 | `INVALID_MEMO` | 400 | 메모는 40자까지 적을 수 있어요 | | ✅ |
 | `AUDIO_NOT_READY` | 409 | 테이프를 불러오지 못했어요 | | ✅ |
 | `GROUP_NOT_FOUND` | 404 | 칸을 찾을 수 없어요 | | ✅ |
+| `GROUP_FULL` | 409 | 한 칸에는 10개까지 넣을 수 있어요 | | ✅ |
+| `DRAWER_FULL` | 409 | 서랍이 꽉 찼어요. 테이프를 지우거나 서랍을 넓혀 주세요 | | ✅ |
 | `INVALID_GROUP_NAME` | 400 | 칸 이름은 1~12자로 적어주세요 | | ✅ |
 | `LINK_NOT_FOUND` | 404 | 링크를 찾을 수 없어요 | | ✅ |
 | `LINK_TAKEN` | 409 | 이미 다른 분이 받은 테이프예요 | | ✅ |
@@ -650,6 +652,10 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 
 ### ✅ `POST /deliveries/{id}/open`
 소포 뜯기(`unwrap`). 처음 한 번만 `openedAt`을 채우고, 보낸 사람의 보낸 테이프 상태가 `opened`가 된다. 응답 `200 ShelfItem`
+- **서랍이 꽉 차면 뜯을 수 없다**: 뜯은 테이프 수(`stored`)가 `cap` 이상이면 `409 DRAWER_FULL`("서랍이 꽉 찼어요. 테이프를 지우거나 서랍을 넓혀 주세요"). 받기(친구가 보낸 테이프, 링크 `claim`)는 늘 되고 "분류 안 함"에 소포로 들어온다. 링크로 받은 테이프도 이 단계에서 같은 규칙
+- 이미 뜯은 테이프는 꽉 차 있어도 다시 불러도 `200`(그대로)
+- 예전에 `cap`을 넘겨 뜯어 둔 계정은 그대로 두고, 더 뜯는 것만 막는다. 같은 사람의 동시 뜯기도 `cap`을 넘지 않는다
+- 오류 `404 TAPE_NOT_FOUND`, `409 DRAWER_FULL`
 
 ### ✅ `GET /deliveries/{id}/audio`
 재생 URL. **받는 사람만**, 뜯은 테이프만. 짧은 만료(10분)라서 곡을 넘길 때마다 부른다. 앱은 한 번 받은 파일을 캐시한다.
@@ -667,24 +673,26 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 ### ✅ `GET /shelf`
 ```json
 {
-  "stored": 11,
+  "stored": 10,
   "cap": 12,
   "full": false,
   "unopenedCount": 1,
   "unsorted": [ShelfItem],
-  "groups": [ { "id": "…", "name": "2026 생일", "items": [ShelfItem] } ]
+  "groups": [ { "id": "…", "name": "2026 생일", "cap": 10, "items": [ShelfItem] } ]
 }
 ```
+- `stored`: **서랍 보관량 = 뜯은 테이프 수**(분류 안 함 + 모든 칸). 안 뜯은 소포는 세지 않는다. `full = stored >= cap`
+- `groups[].cap`: 한 칸에 넣을 수 있는 테이프 수(지금 **10**, 서버 상수 `GROUP_CAPACITY`). 앱은 `items.length`/`cap`("n/10")을 그린다. 예전에 10개를 넘겨 넣은 칸은 `items.length > cap`일 수 있다(그대로 두고 더 넣는 것만 막는다). "분류 안 함"은 칸이 아니라 제한이 없다
 - 새로 도착한 테이프는 "분류 안 함" **맨 위**
-- `full: true`면 꽉 참 배너(`fullOn`) "지우거나 넓혀야 새 테이프를 받을 수 있어요" → 넓히기 → 상점
+- `full: true`면 꽉 참 배너(`fullOn`) → 넓히기 → 상점. 꽉 차도 새 테이프는 받지만, 테이프를 지우거나 서랍을 넓히기 전에는 소포를 뜯을 수 없다(`409 DRAWER_FULL`)
 - `stored == 0`이면 빈 서랍(`emptyOn`)
 - `unopenedCount`: "분류 안 함"의 안 뜯은 소포 수(= `Me.drawer.unopenedCount`)
 
 ### ✅ `POST /shelf/groups`
-칸 추가(무료, 맨 뒤에 붙는다). `{ "name": "2026 생일" }` (1~12자, 비우거나 빼면 "새 칸") → `201 { "id", "name", "items": [] }` · `400 INVALID_GROUP_NAME`
+칸 추가(무료, 맨 뒤에 붙는다). `{ "name": "2026 생일" }` (1~12자, 비우거나 빼면 "새 칸") → `201 { "id", "name", "cap": 10, "items": [] }` · `400 INVALID_GROUP_NAME`
 
 ### ✅ `PATCH /shelf/groups/{id}`
-`{ "name": "새 이름" }` 그리고/또는 순서 `{ "afterId": "바로 앞 칸 id" | null }` (null = 맨 앞) → `200 { "id", "name", "items" }` · `404 GROUP_NOT_FOUND`
+`{ "name": "새 이름" }` 그리고/또는 순서 `{ "afterId": "바로 앞 칸 id" | null }` (null = 맨 앞) → `200 { "id", "name", "cap", "items" }` · `404 GROUP_NOT_FOUND`
 
 ### ✅ `DELETE /shelf/groups/{id}`
 칸 지우기. 안에 있던 테이프는 "분류 안 함"의 **끝**으로 가고 뜯은 상태가 된다("칸을 지웠어요 · 테이프는 분류 안 함으로"). `204`
@@ -695,7 +703,7 @@ PUT이 끝나면 부른다. 서버가 파일이 있는지·크기를 확인하�
 { "groupId": "칸 id 또는 null(분류 안 함)", "afterId": "바로 앞 테이프 id 또는 null(맨 앞)" }
 ```
 응답 `200 ShelfItem`. 앱은 낙관적으로 먼저 옮기고, 실패하면 되돌린다.
-오류 `409 TAPE_NOT_OPENED`(안 뜯은 소포는 칸으로 못 옮긴다. "분류 안 함" 안에서 순서 바꾸기는 된다), `404 TAPE_NOT_FOUND`(`afterId`가 그 칸에 없을 때도), `404 GROUP_NOT_FOUND`
+오류 `409 TAPE_NOT_OPENED`(안 뜯은 소포는 칸으로 못 옮긴다. "분류 안 함" 안에서 순서 바꾸기는 된다), `409 GROUP_FULL`(다른 곳에서 옮겨 넣을 칸에 이미 10개 이상, "한 칸에는 10개까지 넣을 수 있어요". 같은 칸 안 순서 바꾸기와 "분류 안 함"으로 옮기기는 된다. 같은 칸으로 동시에 옮겨도 10개를 넘지 않는다), `404 TAPE_NOT_FOUND`(`afterId`가 그 칸에 없을 때도), `404 GROUP_NOT_FOUND`
 
 ### ✅ `PUT /shelf/items/{id}/memo`
 테이프 메모(`shMemo`, ⋯ 메뉴 "메모 남기기/메모 수정하기"). **나에게만 보인다**(보낸 사람에게는 보이지 않는다).
@@ -934,7 +942,7 @@ AdMob 보상형 광고 서버 측 확인(SSV) 콜백. **Google이 부른다.** G
 FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림을 받는 사람이 붙인 별명**이 있으면 별명, 없으면 원래 이름이다. `notificationsEnabled: false`면 보내지 않는다. 앱이 지워져 무효가 된 토큰은 서버가 지운다. 서버에 FCM 키가 없으면(개발) 보내지 않고 로그만 남긴다.
 | 종류 | title | body | data |
 |---|---|---|---|
-| 테이프 도착 | `{보낸 사람}님이 테이프를 보냈어요` | `{15초·1분·3분} 테이프가 도착했어요. 뜯어서 들어보세요` | `{ "type": "tape", "deliveryId": "…" }` → 서랍 + 소포 화면 |
+| 테이프 도착 | `{보낸 사람}님이 테이프를 보냈어요` | `{15초·1분·3분} 테이프가 도착했어요. 뜯어서 들어보세요`. 받는 사람 서랍이 꽉 찼으면(뜯은 수 ≥ cap) `{15초·1분·3분} 테이프가 도착했어요. 서랍이 꽉 차서 뜯으려면 자리가 필요해요` | `{ "type": "tape", "deliveryId": "…" }` → 서랍 + 소포 화면 |
 | 크레딧 선물 | `{보낸 사람}님이 크레딧을 선물했어요` | `{30} 크레딧을 받았어요` | `{ "type": "gift" }` → 크레딧 내역 |
 | 링크 테이프를 받음 | `{받은 사람}님이 테이프를 받았어요` (받은 사람의 실제 이름 또는 내가 붙인 별명. `linkName`은 쓰지 않는다) | `이제 서로 친구예요` | `{ "type": "claimed", "deliveryId": "…" }` → 보낸 테이프 상세 |
 
@@ -945,7 +953,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 `NODE_ENV=production`이면 전부 `404`. 앱 개발과 e2e 테스트용.
 
 ### ✅ `POST /dev/seed`
-로그인한 계정을 **프로토타입 초기 데이터**로 만든다(기존 테이프·칸·친구·차단·내역·보유 테이프는 지운다). 응답 `200 { "friends": 6, "stored": 10, "groups": 3, "sent": 4, "credits": 120 }`
+로그인한 계정을 **프로토타입 초기 데이터**로 만든다(기존 테이프·칸·친구·차단·내역·보유 테이프는 지운다). 응답 `200 { "friends": 6, "stored": 8, "groups": 3, "sent": 4, "credits": 120 }`(`stored`는 뜯은 테이프 수. 안 뜯은 소포 2개가 더 있다)
 
 | 항목 | 내용 |
 |---|---|
@@ -1056,6 +1064,7 @@ FCM HTTP v1로 보낸다(`notification` + `data`). 문구의 이름은 **알림�
 
 | 날짜 | 내용 |
 |---|---|
+| 2026-10-01 | **서랍 용량 규칙 변경**: 서랍 보관량 `stored`(`GET /shelf`, `Me.drawer`) = **뜯은 테이프 수**(안 뜯은 소포는 세지 않음). 받기는 늘 되고, 꽉 차면 `POST /deliveries/{id}/open`이 `409 DRAWER_FULL`(이미 뜯은 건 200). 한 칸 최대 10개: 그룹 응답에 `cap: 10`, `PATCH /shelf/items/{id}`로 다른 곳에서 넣을 때 `409 GROUP_FULL`. 오류 코드 `DRAWER_FULL`·`GROUP_FULL` 추가. `stats.receivedCount`는 안 뜯은 소포 포함(값 그대로). 서랍이 꽉 찬 사람에게 가는 테이프 도착 푸시 본문 변경. 이용약관 1.6 |
 | 2026-10-01 | Google 로그인 `POST /auth/google { idToken }` 추가(응답 `AuthResponse`, 오류 `SOCIAL_TOKEN_INVALID`·`SOCIAL_PROVIDER_UNAVAILABLE`·`REJOIN_RESTRICTED` 그대로). `Me.providers`에 `google`. `suggestedName`에 Google 이름. 환경 변수 `GOOGLE_CLIENT_IDS`. 개인정보 처리방침 1.6·이용약관 1.5 |
 | 2026-09-30 | 루트 `/`에 소개 사이트(정적, edge Caddy가 서빙). API 변경 없음 |
 | 2026-09-30 | 아동 안전 정책 페이지 `GET /child-safety` 추가 (HTML, `/api` 밖, Google Play 아동 안전 표준 게시용, 한국어 본문 + 영어 요약). `/privacy`·`/terms` 아래에 이 페이지 링크 추가(문서 내용 변경 없음, 버전 그대로) |

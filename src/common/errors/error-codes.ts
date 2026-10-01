@@ -148,6 +148,14 @@ export const ErrorCodes = {
     status: HttpStatus.NOT_FOUND,
     message: '칸을 찾을 수 없어요',
   },
+  GROUP_FULL: {
+    status: HttpStatus.CONFLICT,
+    message: '한 칸에는 10개까지 넣을 수 있어요',
+  },
+  DRAWER_FULL: {
+    status: HttpStatus.CONFLICT,
+    message: '서랍이 꽉 찼어요. 테이프를 지우거나 서랍을 넓혀 주세요',
+  },
   INVALID_GROUP_NAME: {
     status: HttpStatus.BAD_REQUEST,
     message: '칸 이름은 1~12자로 적어주세요',

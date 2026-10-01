@@ -14,6 +14,8 @@ export interface TapeDeliveredEvent {
   senderId: string;
   senderName: string;
   tapeType: TapeType;
+  /** 받는 사람 서랍이 꽉 찼는지(뜯은 테이프 수 >= cap). 꽉 찼으면 뜯을 수 없다고 알린다 */
+  drawerFull?: boolean;
 }
 
 export interface LinkClaimedEvent {
@@ -68,7 +70,9 @@ export class NotificationsService {
     );
     return this.push(e.recipientId, {
       title: `${name}님이 테이프를 보냈어요`,
-      body: `${TAPE_NAMES[e.tapeType]} 테이프가 도착했어요. 뜯어서 들어보세요`,
+      body: e.drawerFull
+        ? `${TAPE_NAMES[e.tapeType]} 테이프가 도착했어요. 서랍이 꽉 차서 뜯으려면 자리가 필요해요`
+        : `${TAPE_NAMES[e.tapeType]} 테이프가 도착했어요. 뜯어서 들어보세요`,
       data: { type: 'tape', deliveryId: e.deliveryId },
     });
   }
